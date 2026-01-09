@@ -1,8 +1,0 @@
-/* App specific CSS - Theme-aware styles via MUI */
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}

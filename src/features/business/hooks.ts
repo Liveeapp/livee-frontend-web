@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getBusinesses, updateBranchStatus, deleteBusiness } from "./api";
+import {
+  getBusinesses,
+  updateBranchStatus,
+  deleteBusiness,
+  deleteBranch,
+} from "./api";
 import type {
   UpdateBranchStatusDto,
   BusinessModel,
@@ -7,7 +12,10 @@ import type {
 } from "./types";
 import { BUSINESS_LIST } from "@/shared/constants/appConstants";
 
-export const useBusinesses = (page = 1, limit: number = BUSINESS_LIST.PAGE_LIMIT) => {
+export const useBusinesses = (
+  page = 1,
+  limit: number = BUSINESS_LIST.PAGE_LIMIT
+) => {
   return useQuery({
     queryKey: ["businesses", page, limit],
     queryFn: () => getBusinesses(page, limit),
@@ -88,9 +96,13 @@ export const useDeleteBusiness = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteBusiness(id),
+
+    // Optimistic update: immediately remove from UI
     onMutate: async (id) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
 
+      // Snapshot the previous values for all business queries
       const queries = queryClient.getQueriesData<
         PaginatedResponse<BusinessModel>
       >({
@@ -99,6 +111,7 @@ export const useDeleteBusiness = () => {
 
       const previousDataMap = new Map();
 
+      // Optimistically remove business from all cached queries
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
@@ -115,15 +128,73 @@ export const useDeleteBusiness = () => {
 
       return { previousDataMap };
     },
+
+    // On success, refetch to ensure server sync
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["businesses"] });
     },
+
+    // On error, rollback to the previous state
     onError: (_error, _id, context) => {
       if (context?.previousDataMap) {
         context.previousDataMap.forEach((oldData, queryKey) => {
           queryClient.setQueryData(queryKey, oldData);
         });
       }
+      console.error("Failed to delete business:", _error);
+    },
+  });
+};
+
+export const useDeleteBranch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteBranch(id),
+
+    // Optimistic update: immediately remove branch from UI
+    onMutate: async (id) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["businesses"] });
+
+      // Snapshot the previous values for all business queries
+      const queries = queryClient.getQueriesData<
+        PaginatedResponse<BusinessModel>
+      >({
+        queryKey: ["businesses"],
+      });
+
+      const previousDataMap = new Map();
+
+      // Optimistically remove branch from all cached queries
+      queries.forEach(([queryKey, oldData]) => {
+        if (oldData) {
+          previousDataMap.set(queryKey, oldData);
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            data: oldData.data.map((business) => ({
+              ...business,
+              branches: business.branches.filter((branch) => branch.id !== id),
+            })),
+          });
+        }
+      });
+
+      return { previousDataMap };
+    },
+
+    // On success, refetch to ensure server sync
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["businesses"] });
+    },
+
+    // On error, rollback to the previous state
+    onError: (_error, _id, context) => {
+      if (context?.previousDataMap) {
+        context.previousDataMap.forEach((oldData, queryKey) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+      console.error("Failed to delete branch:", _error);
     },
   });
 };

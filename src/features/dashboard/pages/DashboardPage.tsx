@@ -13,7 +13,7 @@ import {
   getBranchStatusCounts,
   getBusinessTypeLabel,
 } from "@/features/business/utils";
-import type { BusinessType } from "../types";
+import type { BusinessType } from "@/features/business/types";
 export const DashboardPage = () => {
   // Fetch a larger snapshot for calculations
   const { data, isLoading } = useBusinesses(1, 100);

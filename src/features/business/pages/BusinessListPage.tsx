@@ -21,6 +21,7 @@ import {
   FormControl,
   type SelectChangeEvent,
   LinearProgress,
+  CircularProgress,
 } from "@mui/material";
 import {
   DataGrid,
@@ -40,19 +41,11 @@ import {
   useBusinesses,
   useUpdateBranchStatus,
   useDeleteBusiness,
+  useDeleteBranch,
 } from "../hooks";
-import type {
-  BusinessModel,
-} from "../types";
-import { useDeleteBranch } from "@/features/branches/hooks";
-import {
-  getBusinessTypeLabel,
-  getBranchStatusCounts,
-} from "../utils";
-import {
-  GradientBox,
-  BranchList,
-} from "../components";
+import type { BusinessModel } from "../types";
+import { getBusinessTypeLabel, getBranchStatusCounts } from "../utils";
+import { GradientBox, BranchList } from "../components";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const BusinessListPage = () => {
@@ -196,7 +189,17 @@ export const BusinessListPage = () => {
         const counts = getBranchStatusCounts(params.row.branches);
         return (
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <Stack direction="row" spacing={1} sx={{ p: 0.5, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                p: 0.5,
+                bgcolor: "background.default",
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
               {counts.Approved > 0 && (
                 <Tooltip title="Verified Branches">
                   <Box
@@ -212,7 +215,10 @@ export const BusinessListPage = () => {
                     }}
                   >
                     <ApproveIcon sx={{ fontSize: 14 }} />
-                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                    >
                       {counts.Approved}
                     </Typography>
                   </Box>
@@ -233,7 +239,10 @@ export const BusinessListPage = () => {
                     }}
                   >
                     <PendingIcon sx={{ fontSize: 14 }} />
-                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                    >
                       {counts.Pending}
                     </Typography>
                   </Box>
@@ -254,7 +263,10 @@ export const BusinessListPage = () => {
                     }}
                   >
                     <RejectedIcon sx={{ fontSize: 14 }} />
-                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                    >
                       {counts.Rejected}
                     </Typography>
                   </Box>
@@ -276,7 +288,10 @@ export const BusinessListPage = () => {
                 boxShadow: theme.customShadows.md,
                 background: theme.gradients.primary,
                 color: "white",
-                "&:hover": { transform: 'translateY(-2px)', filter: 'brightness(1.1)' }
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  filter: "brightness(1.1)",
+                },
               }}
             >
               Manage
@@ -315,7 +330,11 @@ export const BusinessListPage = () => {
               },
             }}
           >
-            <DeleteIcon />
+            {isDeletingBusiness ? (
+              <CircularProgress size={20} color="error" />
+            ) : (
+              <DeleteIcon />
+            )}
           </IconButton>
         </Box>
       ),
@@ -326,9 +345,18 @@ export const BusinessListPage = () => {
     <Box sx={{ width: "100%" }}>
       <Box sx={{ mb: 6 }}>
         {/* Header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 3,
+          }}
+        >
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            >
               <GradientBox gradient="secondary" sx={{ p: 0.75, width: "auto" }}>
                 <StoreIcon fontSize="small" />
               </GradientBox>
@@ -365,7 +393,7 @@ export const BusinessListPage = () => {
             justifyContent: "space-between",
             alignItems: { xs: "stretch", md: "center" },
             gap: 2,
-            mb: 4
+            mb: 4,
           }}
         >
           {/* Search */}
@@ -570,10 +598,25 @@ export const BusinessListPage = () => {
                 branches={selectedBusiness.branches}
                 onUpdateStatus={(params) => {
                   updateStatus(params, {
-                    onSuccess: () => setSelectedBusiness(null)
+                    onSuccess: () => setSelectedBusiness(null),
                   });
                 }}
-                onDeleteBranch={deleteBranch}
+                onDeleteBranch={(branchId) => {
+                  deleteBranch(branchId, {
+                    onSuccess: () => {
+                      // Update the local selectedBusiness state to remove the branch
+                      setSelectedBusiness((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          branches: prev.branches.filter(
+                            (b) => b.id !== branchId
+                          ),
+                        };
+                      });
+                    },
+                  });
+                }}
                 isUpdatingStatus={isUpdatingStatus}
                 isDeletingBranch={isDeletingBranch}
               />

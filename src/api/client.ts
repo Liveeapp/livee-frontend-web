@@ -64,7 +64,11 @@ const createAxiosClient = (baseURL: string): AxiosInstance => {
         originalRequest._retry = true;
         isRefreshing = true;
 
-        const { refreshToken: storedRefreshToken, login, logout } = useAuthStore.getState();
+        const {
+          refreshToken: storedRefreshToken,
+          login,
+          logout,
+        } = useAuthStore.getState();
 
         try {
           if (!storedRefreshToken) throw new Error("No refresh token");
@@ -74,7 +78,7 @@ const createAxiosClient = (baseURL: string): AxiosInstance => {
           });
 
           const { accessToken, refreshToken: newRefreshToken } = response.data;
-          
+
           // Get current user to preserve it
           const user = useAuthStore.getState().user;
           if (user) {
@@ -87,6 +91,10 @@ const createAxiosClient = (baseURL: string): AxiosInstance => {
         } catch (refreshError) {
           processQueue(refreshError, null);
           logout();
+
+          // Redirect to login on unauthorized
+          window.location.href = "/login";
+
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

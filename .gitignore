@@ -38,7 +38,3 @@ coverage
 # Environment variables
 .env
 .env.production
-
-# OS and IDE
-.husky
-Thumbs.db

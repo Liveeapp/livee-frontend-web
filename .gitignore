@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Optional npm cache directory
+.npm
+.eslintcache
+
+# Build and cache directories
+.next
+.cache
+.nuxt
+.out
+coverage
+.build
+
+# Environment variables
+.env
+.env.production
+
+# OS and IDE
+.husky
+Thumbs.db

@@ -1,6 +1,9 @@
 # Livee Frontend Web
 
-A modern React + TypeScript + Vite application with professional structure, state management, and development tooling. Built following SOLID principles and clean architecture patterns.
+A modern, professional React + TypeScript + Vite admin console application. Built with clean architecture, SOLID principles, and best practices for enterprise-level frontend development.
+
+**Platform:** Modern management interface for the Livee ecosystem
+**Target Users:** System administrators and business operators
 
 ## 📋 Table of Contents
 
@@ -11,283 +14,323 @@ A modern React + TypeScript + Vite application with professional structure, stat
 - [Linting & Code Quality](#linting--code-quality)
 - [Pre-commit Hooks](#pre-commit-hooks)
 - [Architecture](#architecture)
+- [Technologies](#-technologies)
+- [Contributing](#-contributing)
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- npm or yarn
+- **Node.js** v18 or higher
+- **npm** v9+ or **pnpm** v8+
 
 ### Installation
 
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd livee-frontend-web
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Liveeapp/livee-frontend-web.git
+   cd livee-frontend-web
+   ```
 
-2. Install dependencies
-```bash
-npm install
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
 
-3. Set up environment variables
-```bash
-cp .env.example .env
-```
-
-Then edit `.env` with your local configuration (or use defaults for development).
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` with your local configuration.
 
 ### Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with HMR |
+| `npm run dev` | Start dev server (http://localhost:5173) |
 | `npm run build` | Build for production |
-| `npm run lint` | Run ESLint to check code quality |
-| `npm run lint:fix` | Run ESLint and automatically fix issues |
-| `npm run type-check` | Run TypeScript type checking |
 | `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint checks |
+| `npm run lint:fix` | Fix ESLint issues automatically |
+| `npm run type-check` | TypeScript type checking |
 
 ## 📁 Project Structure
 
 ```
 src/
-├── api/                          # API layer
-│   ├── client.ts                # Axios instances with interceptors
-│   ├── queryClient.ts           # React Query configuration
-│   └── services/                # Service layer with dependency injection
-│       ├── interfaces.ts        # Service interfaces (contracts)
-│       ├── implementation.ts    # Service implementations
+├── api/                              # API Layer
+│   ├── client.ts                    # Axios instances with interceptors
+│   ├── queryClient.ts               # React Query/TanStack Query config
+│   └── services/                    # Service layer (dependency injection)
+│       ├── interfaces.ts            # Service contracts
+│       ├── implementation.ts        # Service implementations
 │       └── index.ts
-├── app/                          # Application root
-│   ├── providers.tsx            # AppProvider with all context providers
-│   └── routes.tsx               # Application routes configuration
-├── features/                     # Feature modules
-│   ├── auth/                    # Authentication feature
+├── app/                              # Application Root
+│   ├── providers.tsx                # Context providers & wrappers
+│   └── routes.tsx                   # Route configuration
+├── features/                         # Feature Modules
+│   ├── auth/                        # Authentication
 │   │   ├── api.ts
 │   │   ├── hooks.ts
-│   │   ├── store.ts            # Zustand store
+│   │   ├── store.ts                # Zustand store
 │   │   ├── types.ts
 │   │   ├── components/
 │   │   │   └── ProtectedRoutes.tsx
 │   │   └── pages/
 │   │       └── LoginPage.tsx
-│   ├── business/               # Business feature
+│   ├── business/                    # Business Management
 │   │   ├── api.ts
 │   │   ├── hooks.ts
 │   │   ├── types.ts
+│   │   ├── utils.ts
 │   │   ├── components/
+│   │   │   ├── AvatarIcon.tsx
+│   │   │   ├── BranchList.tsx
+│   │   │   ├── GradientBox.tsx
+│   │   │   ├── StatusBadge.tsx
+│   │   │   ├── TableHeaderCell.tsx
+│   │   │   └── index.ts
 │   │   └── pages/
 │   │       └── BusinessListPage.tsx
-│   └── branches/               # Branches feature
-├── shared/                       # Shared utilities and components
+│   ├── branches/                    # Branch Management
+│   │   └── ...
+│   ├── dashboard/                   # Dashboard
+│   │   ├── components/
+│   │   │   ├── ChartSection.tsx
+│   │   │   ├── ProgressCard.tsx
+│   │   │   ├── StatCard.tsx
+│   │   │   └── index.ts
+│   │   └── pages/
+│   │       └── DashboardPage.tsx
+│   ├── home/                        # Home Page
+│   │   └── pages/
+│   │       └── HomePage.tsx
+│   └── profile/                     # User Profile
+│       └── pages/
+│           └── ProfilePage.tsx
+├── shared/                           # Shared Utilities & Components
 │   ├── config/
-│   │   └── env.ts              # Environment variable validation
+│   │   └── env.ts                  # Environment validation
 │   ├── constants/
-│   │   ├── appConstants.ts     # App-wide constants
+│   │   ├── appConstants.ts         # App-wide constants
 │   │   └── index.ts
-│   ├── layout/                 # Layout components
-│   ├── ui/                     # UI configuration
-│   │   ├── theme.ts            # Material-UI theme
-│   │   └── uiStore.ts          # UI state (Zustand)
-│   └── utils/                  # Shared utilities
-│       ├── errors.ts           # Error handling
+│   ├── layout/                     # Layout Components
+│   │   ├── MainLayout.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── TopBar.tsx
+│   ├── ui/                         # Design System
+│   │   ├── theme.ts                # Material-UI theme
+│   │   ├── tokens.ts               # Design tokens
+│   │   └── uiStore.ts              # UI state (Zustand)
+│   └── utils/                      # Utilities
+│       ├── errors.ts               # Error handling
 │       └── index.ts
-├── App.tsx                       # Root component
-└── main.tsx                      # Application entry point
+├── App.tsx                          # Root component
+└── main.tsx                         # Entry point
 ```
 
 ## 🔧 Environment Configuration
 
-The application uses environment variables for configuration. All environment variables must be prefixed with `VITE_` to be exposed by Vite.
+All environment variables must be prefixed with `VITE_` to be exposed by Vite.
 
-### Supported Variables
+### Required Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `VITE_AUTH_API_URL` | ✓ | - | Authentication service base URL |
-| `VITE_ADMIN_API_URL` | ✓ | - | Admin service base URL |
-| `VITE_APP_NAME` | ✗ | `Livee` | Application name |
-| `VITE_APP_ENV` | ✗ | `development` | Environment (`development`, `staging`, `production`) |
-| `VITE_ENABLE_DEVTOOLS` | ✗ | `false` | Enable React Query DevTools in UI |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_AUTH_API_URL` | Authentication service endpoint | `http://localhost:3001` |
+| `VITE_ADMIN_API_URL` | Admin service endpoint | `http://localhost:3008` |
 
-### Environment Files
+### Optional Variables
 
-- `.env` - Local development (not committed, created from .env.example)
-- `.env.example` - Template for required variables
-- `.env.production` - Production environment variables
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_APP_NAME` | `Livee` | Application name |
+| `VITE_APP_ENV` | `development` | Environment type |
+| `VITE_ENABLE_DEVTOOLS` | `false` | Enable React Query DevTools |
 
-### Example `.env` Setup
+### Example `.env` File
 
 ```bash
+# API Endpoints
 VITE_AUTH_API_URL=http://localhost:3001
 VITE_ADMIN_API_URL=http://localhost:3008
-VITE_APP_NAME=Livee
+
+# App Settings
+VITE_APP_NAME=Livee Console
 VITE_APP_ENV=development
 VITE_ENABLE_DEVTOOLS=true
 ```
 
 ## 💻 Development
 
-### Starting the Development Server
+### Start Development Server
 
 ```bash
 npm run dev
 ```
 
-The application will start at `http://localhost:5173` with Hot Module Replacement (HMR) enabled.
+Access the application at **http://localhost:5173**
 
-### Development Features
-
-- **Hot Module Replacement**: Code changes instantly reflect in the browser
-- **Type Safety**: Full TypeScript support with strict mode
-- **React Query DevTools**: Inspect React Query cache state (in development)
-- **Dark Mode Support**: Toggle theme via UI store
+#### Features
+- ⚡ Hot Module Replacement (HMR) - instant updates
+- 🔍 TypeScript strict mode
+- 📊 React Query DevTools (in development)
+- 🌓 Dark mode support
+- 🎨 Material-UI theming
 
 ## 🎯 Linting & Code Quality
 
 ### ESLint Configuration
 
-The project uses ESLint with TypeScript support for code quality. Current configurations include:
+Configured with:
 - JavaScript best practices
 - TypeScript recommended rules
 - React hooks linting
 - React refresh plugin
+- Modern styling best practices
 
-To expand ESLint with type-aware linting, see ESLint configuration in `eslint.config.js`.
-
-### Running Linters
+### Running Quality Checks
 
 ```bash
-# Check for lint errors
+# Check for errors
 npm run lint
 
-# Fix auto-fixable lint errors
+# Fix auto-fixable issues
 npm run lint:fix
 
-# Type check without building
+# Type checking
 npm run type-check
 ```
 
 ## 🪝 Pre-commit Hooks
 
-The project uses **Husky** for Git pre-commit hooks and **lint-staged** to run linters only on staged files.
+Uses **Husky** and **lint-staged** to run quality checks on staged files before commits.
 
-### Automatic Code Quality on Commit
+### Automatic Checks
 
-When you commit code, the following checks run automatically:
+1. ✅ **ESLint** - Lints and fixes TypeScript/React files
+2. ✅ **TypeScript** - Type checking on modified files
 
-1. **ESLint**: Lints and fixes TypeScript/React files
-2. **TypeScript**: Type checking on modified files
+If checks fail, fix issues and retry.
 
-If checks fail, the commit is blocked. Fix issues and try again.
-
-### Manual Hook Setup
-
-If hooks don't work after cloning, run:
+### Manual Setup
 
 ```bash
 npm install
 npm run prepare
 ```
 
-### Bypassing Hooks (Not Recommended)
-
-If necessary, bypass hooks with:
+### Bypass Hooks (Not Recommended)
 
 ```bash
 git commit --no-verify
 ```
 
-However, this is discouraged as it bypasses quality checks.
-
 ## 🏗️ Architecture
 
-### Design Patterns & Principles
+### Design Principles
 
-The project follows **SOLID principles** and modern React best practices:
+The project follows **SOLID principles** and clean architecture:
 
-#### Single Responsibility Principle (SRP)
-- Each module has one reason to change
-- Services, hooks, and components have focused responsibilities
+#### Single Responsibility (SRP)
+Each module has a single, well-defined responsibility
 
-#### Open/Closed Principle (OCP)
-- Code is open for extension via service interfaces
-- Closed for modification through abstractions
+#### Open/Closed (OCP)
+Open for extension via service interfaces, closed for modification
 
-#### Liskov Substitution Principle (LSP)
-- Service implementations are interchangeable via interfaces
-- API service factory ensures consistency
+#### Liskov Substitution (LSP)
+Service implementations are interchangeable via contracts
 
-#### Interface Segregation Principle (ISP)
-- `IAuthApiService` and `IAdminApiService` are specific, not generic
-- Services expose only necessary methods
+#### Interface Segregation (ISP)
+Services expose only necessary methods
 
-#### Dependency Inversion Principle (DIP)
-- Services depend on abstractions (interfaces), not concrete implementations
-- `ApiServiceFactory` manages dependency creation
+#### Dependency Inversion (DIP)
+Services depend on abstractions, not concrete implementations
 
 ### Layered Architecture
 
 ```
-┌─────────────────────────────┐
-│   UI Components             │
-├─────────────────────────────┤
-│   Features & Pages          │
-├─────────────────────────────┤
-│   Hooks & State (Zustand)   │
-├─────────────────────────────┤
-│   API Services              │
-├─────────────────────────────┤
-│   HTTP Client (Axios)       │
-└─────────────────────────────┘
+┌──────────────────────────┐
+│    UI Layer              │
+│  (Components/Pages)      │
+├──────────────────────────┤
+│   Feature Layer          │
+│  (Hooks/State/Utils)     │
+├──────────────────────────┤
+│   Service Layer          │
+│  (API Interfaces)        │
+├──────────────────────────┤
+│   HTTP Client            │
+│  (Axios + Interceptors)  │
+└──────────────────────────┘
 ```
-
-### API Layer
-
-- **`src/api/client.ts`**: Raw Axios instances with interceptors for auth and error handling
-- **`src/api/services/`**: High-level service interfaces and implementations
-- **`src/api/queryClient.ts`**: React Query configuration with cache policies
 
 ### State Management
 
-- **Zustand**: Simple, scalable state management for auth and UI state
-- **React Query**: Server state management and caching
-- **Local Storage**: Persisted state via Zustand middleware
+- **Zustand** - Client state (auth, UI)
+- **React Query** - Server state & caching
+- **Local Storage** - Persisted state
 
 ### Error Handling
 
-- **`src/shared/utils/errors.ts`**: Type-safe error handling utilities
-- **`ApiErrorHandler`**: Custom error class for consistent error processing
-- **Error type guards**: `isAuthError()`, `isValidationError()`, etc.
+- Type-safe error utilities in `src/shared/utils/errors.ts`
+- Custom error classes for different error types
+- Error type guards (`isAuthError()`, `isValidationError()`, etc.)
 
 ## 📚 Technologies
 
-- **React 19**: UI framework
-- **TypeScript**: Type safety
-- **Vite**: Build tool and dev server
-- **React Router v7**: Routing
-- **React Query**: Server state management
-- **Zustand**: Client state management
-- **Material-UI**: Component library
-- **Axios**: HTTP client
-- **Husky**: Git hooks
-- **lint-staged**: Staged file linting
-- **ESLint**: Code linting
-- **Emotion**: CSS-in-JS
+### Core
+- **React** 19 - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool & dev server
+- **React Router** v7 - Routing
+
+### State Management
+- **React Query/TanStack Query** - Server state
+- **Zustand** - Client state
+- **Local Storage** - Persistence
+
+### UI & Styling
+- **Material-UI (MUI)** - Component library
+- **Emotion** - CSS-in-JS
+- **Framer Motion** - Animations
+
+### Development Tools
+- **ESLint** - Code linting
+- **TypeScript** - Type checking
+- **Husky** - Git hooks
+- **lint-staged** - Staged file linting
+
+### HTTP & API
+- **Axios** - HTTP client
+- **Interceptors** - Request/response handling
 
 ## 🤝 Contributing
 
-When contributing to this project:
+### Guidelines
 
 1. Follow the established project structure
-2. Write TypeScript with strict type checking
-3. Ensure code passes ESLint and TypeScript checks
+2. Write strict TypeScript with no `any` types
+3. Pass ESLint and TypeScript checks before committing
 4. Use meaningful commit messages
-5. Keep components and services focused (SRP)
+5. Keep components and services small (SRP)
 
-## 📝 License
+### Code Standards
 
-[Add license information]
+- **Components**: Focused on UI, minimal logic
+- **Hooks**: Encapsulate feature logic
+- **Services**: API communication abstraction
+- **Types**: Comprehensive type definitions
+
+## 📄 License
+
+Proprietary - All rights reserved (2026)
+
+---
+
+**Documentation**: For API details, see the service interfaces in `src/api/services/interfaces.ts`
+
+**Support**: Contact the development team for questions or issues.
+

@@ -13,9 +13,9 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "*.{ts,tsx,js,jsx}": [
       "eslint --fix",
-      "tsc --noEmit --project tsconfig.app.json"
+      "prettier --write"
     ]
   },
   "dependencies": {

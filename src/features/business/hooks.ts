@@ -5,13 +5,14 @@ import type {
   BusinessModel,
   PaginatedResponse,
 } from "./types";
+import { BUSINESS_LIST } from "@/shared/constants/appConstants";
 
-export const useBusinesses = (page = 1, limit = 20) => {
+export const useBusinesses = (page = 1, limit: number = BUSINESS_LIST.PAGE_LIMIT) => {
   return useQuery({
     queryKey: ["businesses", page, limit],
     queryFn: () => getBusinesses(page, limit),
-    staleTime: 30000, // 30s
-    gcTime: 5 * 60 * 1000, // 5 min (formerly cacheTime)
+    staleTime: BUSINESS_LIST.STALE_TIME,
+    gcTime: BUSINESS_LIST.GC_TIME,
   });
 };
 
@@ -25,16 +26,22 @@ export const useUpdateBranchStatus = () => {
       businessId: string;
       data: UpdateBranchStatusDto;
     }) => updateBranchStatus(businessId, data),
+
+    // CTO LEVEL: Immediate Live UI Update with Optimistic Updates
     onMutate: async ({ businessId, data }) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
 
-      // Get all business queries (for any page/limit)
-      const queries = queryClient.getQueriesData<PaginatedResponse<BusinessModel>>({
+      // Snapshot the previous values
+      const queries = queryClient.getQueriesData<
+        PaginatedResponse<BusinessModel>
+      >({
         queryKey: ["businesses"],
       });
 
       const previousDataMap = new Map();
 
+      // Optimistically update every business query in the cache
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
@@ -59,15 +66,20 @@ export const useUpdateBranchStatus = () => {
 
       return { previousDataMap };
     },
+
+    // On success, immediately invalidate and refetch to ensure server sync
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["businesses"] });
     },
+
+    // On error, rollback to the previous state
     onError: (_error, _variables, context) => {
-      // Rollback all affected queries
-      context?.previousDataMap.forEach((oldData, queryKey) => {
-        queryClient.setQueryData(queryKey, oldData);
-      });
-      console.error("Failed to update branch status:", _error);
+      if (context?.previousDataMap) {
+        context.previousDataMap.forEach((oldData, queryKey) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+      console.error("Status update failed, rolling back:", _error);
     },
   });
 };
@@ -78,8 +90,10 @@ export const useDeleteBusiness = () => {
     mutationFn: (id: string) => deleteBusiness(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
-      
-      const queries = queryClient.getQueriesData<PaginatedResponse<BusinessModel>>({
+
+      const queries = queryClient.getQueriesData<
+        PaginatedResponse<BusinessModel>
+      >({
         queryKey: ["businesses"],
       });
 
@@ -105,10 +119,11 @@ export const useDeleteBusiness = () => {
       queryClient.invalidateQueries({ queryKey: ["businesses"] });
     },
     onError: (_error, _id, context) => {
-      context?.previousDataMap.forEach((oldData, queryKey) => {
-        queryClient.setQueryData(queryKey, oldData);
-      });
-      console.error("Failed to delete business:", _error);
+      if (context?.previousDataMap) {
+        context.previousDataMap.forEach((oldData, queryKey) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
     },
   });
 };

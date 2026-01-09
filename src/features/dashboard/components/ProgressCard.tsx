@@ -1,60 +1,84 @@
-import { Card, Box, Typography, LinearProgress } from "@mui/material";
+import {
+  Card,
+  Box,
+  Typography,
+  LinearProgress,
+  Stack,
+  useTheme,
+  alpha,
+} from "@mui/material";
 
-interface ProgressItemProps {
+interface ProgressItem {
   label: string;
   value: number;
-  color?: string;
+  color?: "primary" | "secondary" | "success" | "warning" | "info";
 }
-
-export const ProgressItem = ({
-  label,
-  value,
-  color = "#2563EB",
-}: ProgressItemProps) => (
-  <Box sx={{ mb: 2 }}>
-    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, color }}>
-        {value}%
-      </Typography>
-    </Box>
-    <LinearProgress
-      variant="determinate"
-      value={value}
-      sx={{
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: "rgba(0, 0, 0, 0.08)",
-        "& .MuiLinearProgress-bar": {
-          borderRadius: 4,
-          backgroundColor: color,
-        },
-      }}
-    />
-  </Box>
-);
 
 interface ProgressCardProps {
   title: string;
-  items: ProgressItemProps[];
+  items: ProgressItem[];
 }
 
-export const ProgressCard = ({ title, items }: ProgressCardProps) => (
-  <Card sx={{ p: 3 }}>
-    <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-      {title}
-    </Typography>
-    <Box>
-      {items.map((item) => (
-        <ProgressItem
-          key={item.label}
-          label={item.label}
-          value={item.value}
-          color={item.color}
-        />
-      ))}
-    </Box>
-  </Card>
-);
+export const ProgressCard = ({ title, items }: ProgressCardProps) => {
+  const theme = useTheme();
+
+  return (
+    <Card sx={{ p: 4, height: "100%", borderRadius: 4, bgcolor: "background.paper", backgroundImage: 'none' }}>
+      <Typography variant="h6" sx={{ fontWeight: 800, mb: 4, color: 'text.primary' }}>
+        {title}
+      </Typography>
+      
+      <Stack spacing={4}>
+        {items.map((item) => {
+          const itemColor = item.color || "primary";
+          const gradient = theme.gradients[itemColor === "info" ? "primary" : itemColor];
+          
+          return (
+            <Box key={item.label}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5, alignItems: "center" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "text.secondary" }}>
+                  {item.label}
+                </Typography>
+                <Box 
+                  sx={{ 
+                    px: 1.5, 
+                    py: 0.5, 
+                    borderRadius: 1.5, 
+                    background: gradient, 
+                    color: "white",
+                    boxShadow: theme.customShadows.sm
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 900, letterSpacing: '0.02em' }}>
+                    {item.value}%
+                  </Typography>
+                </Box>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={item.value}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  bgcolor: alpha('#000', 0.04),
+                  "& .MuiLinearProgress-bar": {
+                    borderRadius: 5,
+                    background: gradient,
+                  },
+                }}
+              />
+            </Box>
+          );
+        })}
+      </Stack>
+
+      {items.length === 0 && (
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <Typography variant="body2" sx={{ color: "text.tertiary", fontWeight: 600 }}>
+            No distribution data.
+          </Typography>
+        </Box>
+      )}
+    </Card>
+  );
+};

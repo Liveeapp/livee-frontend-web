@@ -2,11 +2,11 @@ import { Box, Button, Container, Typography, useTheme } from '@mui/material';
 import { ArrowRight as ArrowRightIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants';
+import { motion } from 'framer-motion';
 
 export const HomePage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
 
   return (
     <Box
@@ -15,101 +15,114 @@ export const HomePage = () => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: isDark
-          ? 'linear-gradient(135deg, #111827 0%, #1F2937 100%)'
-          : 'linear-gradient(135deg, #F3F4F6 0%, #FFFFFF 100%)',
+        background: theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle at top right, #1E1B4B 0%, #0F172A 100%)'
+          : 'radial-gradient(circle at top right, #EEF2FF 0%, #F9FAFB 100%)',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      {/* Hero Section */}
-      <Container maxWidth="md">
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontWeight: 900,
-              mb: 2,
-              background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontSize: { xs: '2.5rem', md: '4rem' }
-            }}
-          >
-            Livee Admin
-          </Typography>
+      {/* Dynamic Background Elements */}
+      <Box 
+        component={motion.div}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          rotate: [0, 90, 0],
+          opacity: [0.1, 0.2, 0.1]
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        sx={{ 
+          position: "absolute", 
+          top: "-20%", 
+          right: "-10%", 
+          width: "60vw", 
+          height: "60vw", 
+          background: theme.gradients.primary,
+          filter: "blur(120px)",
+          borderRadius: "40%",
+          zIndex: 0
+        }}
+      />
 
-          <Typography
-            variant="h5"
-            sx={{
-              color: 'text.secondary',
-              mb: 4,
-              fontWeight: 500,
-            }}
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Box sx={{ py: 8 }}>
+          <Box 
+            component={motion.div}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            Streamline your business operations with our powerful management platform.
-          </Typography>
-
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.secondary',
-              mb: 6,
-              maxWidth: 600,
-              mx: 'auto',
-              lineHeight: 1.8,
-            }}
-          >
-            Access real-time insights, manage business listings, and oversee branch approvals through a single, unified interface designed for efficiency.
-          </Typography>
-
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              size="large"
-              endIcon={<ArrowRightIcon />}
-              onClick={() => navigate(ROUTES.ADMIN.DASHBOARD)}
+            <Typography
+              variant="h1"
               sx={{
-                px: 4,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 600,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 12px 24px rgba(37, 99, 235, 0.3)',
-                },
+                fontWeight: 900,
+                mb: 3,
+                background: theme.gradients.primary,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontSize: { xs: '3rem', md: '5rem' },
+                lineHeight: 1
               }}
             >
-              Enter Dashboard
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => navigate(ROUTES.ADMIN.BUSINESSES)}
+              Master Your <br />
+              Business Network
+            </Typography>
+
+            <Typography
+              variant="h4"
               sx={{
-                px: 4,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 600,
-                borderRadius: 2,
-                border: `2px solid ${theme.palette.primary.main}`,
-                '&:hover': {
-                  backgroundColor: `${theme.palette.primary.main}08`,
-                  transform: 'translateY(-2px)',
-                },
+                color: 'text.secondary',
+                mb: 6,
+                maxWidth: 700,
+                fontWeight: 500,
+                lineHeight: 1.4
               }}
             >
-              Manage Businesses
-            </Button>
+              The definitive administrative console for Livee partners. 
+              Manage listings, audit verifications, and scale infrastructure with precision.
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                size="large"
+                endIcon={<ArrowRightIcon />}
+                onClick={() => navigate(ROUTES.ADMIN.DASHBOARD)}
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  borderRadius: 3,
+                  boxShadow: "0 20px 40px -12px rgba(99, 102, 241, 0.4)",
+                }}
+              >
+                Launch Dashboard
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => navigate(ROUTES.ADMIN.BUSINESSES)}
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  borderRadius: 3,
+                  borderWidth: 2,
+                  "&:hover": { borderWidth: 2 }
+                }}
+              >
+                Access Registry
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Container>
 
-      {/* Footer */}
-      <Box sx={{ mt: 'auto', py: 4, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="body2" color="textSecondary">
-          © {new Date().getFullYear()} Livee Admin Console. Secure Internal Access Only.
+      {/* Footer Branding */}
+      <Box sx={{ mt: 'auto', py: 6, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="overline" sx={{ color: 'text.tertiary', fontWeight: 800 }}>
+          LIVEE INFRASTRUCTURE • SECURE CONSOLE ACCESS v2.5
         </Typography>
       </Box>
     </Box>

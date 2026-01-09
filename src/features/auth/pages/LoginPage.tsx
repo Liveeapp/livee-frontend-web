@@ -10,6 +10,7 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import { 
   Visibility, 
@@ -24,6 +25,7 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: login, isPending, error } = useLogin();
+  const theme = useTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,55 +39,85 @@ export const LoginPage = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+        background: theme.palette.mode === 'dark' 
+          ? 'radial-gradient(circle at top left, #1E1B4B 0%, #0F172A 100%)'
+          : 'radial-gradient(circle at top left, #EEF2FF 0%, #F9FAFB 100%)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
           content: '""',
           position: 'absolute',
-          width: '140%',
-          height: '140%',
-          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 60%)',
-          top: '-20%',
-          left: '-20%',
+          width: '60%',
+          height: '60%',
+          background: theme.gradients.primary,
+          filter: 'blur(160px)',
+          opacity: theme.palette.mode === 'dark' ? 0.15 : 0.1,
+          top: '-10%',
+          left: '-10%',
+          borderRadius: '50%',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          width: '50%',
+          height: '50%',
+          background: theme.gradients.secondary,
+          filter: 'blur(140px)',
+          opacity: theme.palette.mode === 'dark' ? 0.15 : 0.1,
+          bottom: '-10%',
+          right: '-10%',
+          borderRadius: '50%',
         }
       }}
     >
       <Card 
         elevation={0}
         sx={{ 
-          maxWidth: 440, 
+          maxWidth: 480, 
           width: '100%', 
           mx: 2, 
-          borderRadius: 4,
+          borderRadius: 6,
           border: '1px solid',
           borderColor: 'divider',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.05)',
-          bgcolor: 'rgba(255, 255, 255, 0.9)',
+          boxShadow: theme.palette.mode === 'dark' ? '0 40px 100px rgba(0,0,0,0.4)' : '0 40px 100px rgba(0,0,0,0.08)',
+          bgcolor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.8)',
           backdropFilter: 'blur(20px)',
           position: 'relative',
           zIndex: 1
         }}
       >
-        <CardContent sx={{ p: { xs: 3, sm: 6 } }}>
-          <Box sx={{ mb: 5, textAlign: 'center' }}>
-            <Typography 
-              variant="h4" 
-              component="h1" 
+        <CardContent sx={{ p: { xs: 4, sm: 8 } }}>
+          <Box sx={{ mb: 6, textAlign: 'center' }}>
+            <Box 
               sx={{ 
-                fontWeight: 900, 
-                color: 'primary.main',
-                letterSpacing: '-0.05em',
-                mb: 1
+                width: 60, 
+                height: 60, 
+                background: theme.gradients.primary, 
+                borderRadius: 2.5, 
+                display: "inline-flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                mb: 3,
+                boxShadow: "0 20px 40px -10px rgba(99, 102, 241, 0.4)"
               }}
             >
-              LIVEE
+              <Typography variant="h4" sx={{ color: "white", fontWeight: 900 }}>L</Typography>
+            </Box>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, 
+                letterSpacing: '-0.04em',
+                mb: 1,
+                background: theme.gradients.primary,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Livee Console
             </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              Console Access
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Secure administrator authentication
+            <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>
+              Management interface for administrators
             </Typography>
           </Box>
 
@@ -93,21 +125,19 @@ export const LoginPage = () => {
             <Alert 
               severity="error" 
               sx={{ 
-                mb: 3, 
-                borderRadius: 2,
-                bgcolor: 'error.lighter',
-                color: 'error.main',
-                border: 'none'
+                mb: 4, 
+                borderRadius: 3,
+                fontWeight: 600
               }}
             >
-              Invalid credentials. Please verify and try again.
+              Access denied. Credentials mismatch.
             </Alert>
           )}
 
           <form onSubmit={handleSubmit}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, mb: 1, display: 'block', color: 'text.secondary', textTransform: 'uppercase', ml: 0.5 }}>
-                Email Address
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                Email Identity
               </Typography>
               <TextField
                 fullWidth
@@ -120,22 +150,16 @@ export const LoginPage = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon sx={{ color: 'text.disabled', fontSize: 20 }} />
+                      <EmailIcon sx={{ color: 'primary.main', fontSize: 22 }} />
                     </InputAdornment>
                   ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2.5,
-                    bgcolor: 'background.paper'
-                  }
                 }}
               />
             </Box>
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, mb: 1, display: 'block', color: 'text.secondary', textTransform: 'uppercase', ml: 0.5 }}>
-                Password
+            <Box sx={{ mb: 5 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                Access Key
               </Typography>
               <TextField
                 fullWidth
@@ -148,7 +172,7 @@ export const LoginPage = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon sx={{ color: 'text.disabled', fontSize: 20 }} />
+                      <LockIcon sx={{ color: 'primary.main', fontSize: 22 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -158,12 +182,6 @@ export const LoginPage = () => {
                       </IconButton>
                     </InputAdornment>
                   ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2.5,
-                    bgcolor: 'background.paper'
-                  }
                 }}
               />
             </Box>
@@ -175,18 +193,14 @@ export const LoginPage = () => {
               size="large"
               disabled={isPending}
               sx={{ 
-                height: 54, 
-                borderRadius: 2.5,
-                fontWeight: 700,
-                fontSize: '1rem',
-                textTransform: 'none',
-                boxShadow: '0 8px 16px rgba(37, 99, 235, 0.2)',
-                '&:hover': {
-                  boxShadow: '0 12px 24px rgba(37, 99, 235, 0.3)',
-                }
+                height: 60, 
+                fontSize: '1.1rem',
+                borderRadius: 3,
+                boxShadow: "0 20px 40px -10px rgba(99, 102, 241, 0.4)",
+                background: theme.gradients.primary,
               }}
             >
-              {isPending ? <CircularProgress size={24} color="inherit" /> : 'Enter Console'}
+              {isPending ? <CircularProgress size={28} color="inherit" /> : 'Enter Platform'}
             </Button>
           </form>
         </CardContent>
@@ -196,12 +210,13 @@ export const LoginPage = () => {
         variant="caption" 
         sx={{ 
           position: 'absolute', 
-          bottom: 24, 
-          color: 'text.disabled',
-          fontWeight: 600
+          bottom: 32, 
+          color: 'text.tertiary',
+          fontWeight: 800,
+          letterSpacing: "0.1em"
         }}
       >
-        © 2026 Livee Platform. Internal Use Only.
+        © 2026 LIVEE ECOSYSTEM • INTERNAL OPS ONLY
       </Typography>
     </Box>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,19 +8,19 @@ import {
   Tooltip,
   Paper,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Container,
   Stack,
   useTheme,
+  alpha,
+  TextField,
+  InputAdornment,
+  MenuItem,
+  Select,
+  FormControl,
+  type SelectChangeEvent,
+  LinearProgress,
 } from "@mui/material";
 import {
   DataGrid,
@@ -28,35 +28,42 @@ import {
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
 import {
-  Delete as DeleteIcon,
-  CheckCircle as ApproveIcon,
-  Cancel as RejectIcon,
-  Visibility as ViewIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
-  Business as BusinessIcon,
-  Schedule as PendingIcon,
+  DeleteRounded as DeleteIcon,
+  CheckCircleRounded as ApproveIcon,
+  CancelRounded as RejectedIcon,
+  BusinessRounded as BusinessIcon,
+  ScheduleRounded as PendingIcon,
+  StorefrontRounded as StoreIcon,
+  SearchRounded as SearchIcon,
 } from "@mui/icons-material";
 import {
   useBusinesses,
   useUpdateBranchStatus,
   useDeleteBusiness,
 } from "../hooks";
-import type { BusinessModel, BranchModel, UpdateBranchStatusDto } from "../types";
+import type {
+  BusinessModel,
+} from "../types";
 import { useDeleteBranch } from "@/features/branches/hooks";
 import {
   getBusinessTypeLabel,
-  getStatusColor,
-  formatBusinessHours,
-  getStatusBadge,
   getBranchStatusCounts,
 } from "../utils";
+import {
+  GradientBox,
+  BranchList,
+} from "../components";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const BusinessListPage = () => {
   const [page, setPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const theme = useTheme();
+
   const [selectedBusiness, setSelectedBusiness] =
     useState<BusinessModel | null>(null);
+
   const { data, isLoading } = useBusinesses(page + 1);
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateBranchStatus();
@@ -65,50 +72,104 @@ export const BusinessListPage = () => {
   const { mutate: deleteBranch, isPending: isDeletingBranch } =
     useDeleteBranch();
 
+  // Client-side filtering for search and status
+  const filteredRows = useMemo(() => {
+    let items = data?.data || [];
+
+    // Search filter
+    items = items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.user?.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Status filter
+    if (statusFilter !== "all") {
+      items = items.filter((item) => {
+        const counts = getBranchStatusCounts(item.branches);
+        if (statusFilter === "approved") return counts.Approved > 0;
+        if (statusFilter === "pending") return counts.Pending > 0;
+        if (statusFilter === "rejected") return counts.Rejected > 0;
+        return true;
+      });
+    }
+
+    return items;
+  }, [data?.data, searchQuery, statusFilter]);
 
   const columns: GridColDef[] = [
     {
       field: "businessImage",
       headerName: "",
-      width: 70,
+      width: 100,
       sortable: false,
       renderCell: (params: GridRenderCellParams<BusinessModel>) => (
         <Avatar
           src={params.row.businessImageUrl || undefined}
           alt={params.row.name}
-          sx={{ 
-            width: 45, 
-            height: 45, 
+          variant="rounded"
+          sx={{
+            width: 52,
+            height: 52,
             bgcolor: "primary.main",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+            borderRadius: 2,
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&:hover": {
+              transform: "scale(1.1) rotate(4deg)",
+              boxShadow: theme.customShadows.md,
+            },
           }}
         >
           {params.row.name.charAt(0)}
         </Avatar>
       ),
     },
-    { 
-      field: "name", 
-      headerName: "Business Name", 
-      flex: 1.2, 
-      minWidth: 150,
+    {
+      field: "name",
+      headerName: "Business Name",
+      flex: 1.5,
+      minWidth: 200,
       renderCell: (params) => (
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {params.value}
-        </Typography>
-      )
+        <Box sx={{ py: 2 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.2 }}
+          >
+            {params.value}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.tertiary",
+              fontWeight: 700,
+              letterSpacing: "0.02em",
+            }}
+          >
+            ID: {params.row.id.slice(0, 12).toUpperCase()}
+          </Typography>
+        </Box>
+      ),
     },
     {
       field: "businessType",
       headerName: "Category",
-      flex: 1,
-      minWidth: 120,
+      width: 160,
       renderCell: (params: GridRenderCellParams<BusinessModel>) => (
         <Chip
           label={getBusinessTypeLabel(params.row.businessType)}
           size="small"
-          variant="outlined"
-          sx={{ borderRadius: "6px", fontWeight: 500 }}
+          sx={{
+            borderRadius: 1.5,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            fontSize: "0.65rem",
+            letterSpacing: "0.05em",
+            bgcolor: "action.hover",
+            color: "text.secondary",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
         />
       ),
     },
@@ -116,67 +177,106 @@ export const BusinessListPage = () => {
       field: "user",
       headerName: "Owner Email",
       flex: 1.2,
-      minWidth: 150,
+      minWidth: 220,
       renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600, color: "text.secondary" }}
+        >
           {params.row.user?.email || "N/A"}
         </Typography>
-      )
+      ),
     },
     {
       field: "branchStatus",
-      headerName: "Internal Branches",
+      headerName: "State Audit",
       flex: 1.5,
-      minWidth: 220,
+      minWidth: 320,
       renderCell: (params: GridRenderCellParams<BusinessModel>) => {
         const counts = getBranchStatusCounts(params.row.branches);
         return (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Stack direction="row" spacing={1}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Stack direction="row" spacing={1} sx={{ p: 0.5, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               {counts.Approved > 0 && (
-                <Tooltip title="Approved">
-                  <Chip 
-                    icon={<ApproveIcon sx={{ fontSize: "14px !important" }} />}
-                    label={counts.Approved} 
-                    size="small" 
-                    color="success" 
-                    variant="filled" 
-                    sx={{ 
-                      height: 20, 
-                      bgcolor: "success.light", 
-                      color: "success.contrastText",
-                      "& .MuiChip-icon": { color: "inherit" }
+                <Tooltip title="Verified Branches">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      background: theme.gradients.success,
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1.25,
+                      color: "white",
                     }}
-                  />
+                  >
+                    <ApproveIcon sx={{ fontSize: 14 }} />
+                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                      {counts.Approved}
+                    </Typography>
+                  </Box>
                 </Tooltip>
               )}
               {counts.Pending > 0 && (
-                <Tooltip title="Pending">
-                  <Chip 
-                    icon={<PendingIcon sx={{ fontSize: "14px !important" }} />}
-                    label={counts.Pending} 
-                    size="small" 
-                    color="warning" 
-                    variant="filled" 
-                    sx={{ 
-                      height: 20, 
-                      bgcolor: "warning.light", 
-                      color: "warning.contrastText",
-                      "& .MuiChip-icon": { color: "inherit" }
+                <Tooltip title="Pending Verification">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      background: theme.gradients.warning,
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1.25,
+                      color: "white",
                     }}
-                  />
+                  >
+                    <PendingIcon sx={{ fontSize: 14 }} />
+                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                      {counts.Pending}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )}
+              {counts.Rejected > 0 && (
+                <Tooltip title="Rejected Records">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      background: theme.gradients.error,
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1.25,
+                      color: "white",
+                    }}
+                  >
+                    <RejectedIcon sx={{ fontSize: 14 }} />
+                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.7rem' }}>
+                      {counts.Rejected}
+                    </Typography>
+                  </Box>
                 </Tooltip>
               )}
             </Stack>
             <Button
               size="small"
-              startIcon={<ViewIcon />}
+              variant="contained"
               onClick={() => setSelectedBusiness(params.row)}
-              sx={{ 
-                textTransform: 'none', 
-                fontWeight: 600,
-                color: 'primary.main',
-                '&:hover': { bgcolor: 'action.hover' }
+              sx={{
+                py: 0.75,
+                px: 2.5,
+                borderRadius: 2,
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                boxShadow: theme.customShadows.md,
+                background: theme.gradients.primary,
+                color: "white",
+                "&:hover": { transform: 'translateY(-2px)', filter: 'brightness(1.1)' }
               }}
             >
               Manage
@@ -187,305 +287,317 @@ export const BusinessListPage = () => {
     },
     {
       field: "actions",
-      headerName: "Actions",
-      width: 80,
+      headerName: "",
+      width: 100,
       sortable: false,
       align: "right",
       renderCell: (params: GridRenderCellParams<BusinessModel>) => (
-        <IconButton
-          color="error"
-          size="small"
-          disabled={isDeletingBusiness}
-          onClick={() => {
-            if (confirm("Delete this business and all its branches?"))
-              deleteBusiness(params.row.id);
-          }}
-          sx={{ opacity: 0.7, '&:hover': { opacity: 1, bgcolor: 'error.light', color: 'error.contrastText' } }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+        <Box sx={{ pr: 2 }}>
+          <IconButton
+            color="error"
+            size="medium"
+            disabled={isDeletingBusiness}
+            onClick={() => {
+              if (
+                confirm(
+                  "Delete this business and all associated data permanently?"
+                )
+              )
+                deleteBusiness(params.row.id);
+            }}
+            sx={{
+              opacity: 0.6,
+              transition: "all 0.2s",
+              "&:hover": {
+                opacity: 1,
+                bgcolor: alpha(theme.palette.error.main, 0.12),
+                transform: "scale(1.1)",
+              },
+            }}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
       ),
     },
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Businesses
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Manage your partners and oversee branch approval status.
-        </Typography>
-      </Box>
-
-      {/* Main Table Paper */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          width: "100%", 
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden'
-        }}
-      >
-        <DataGrid
-          rows={data?.data || []}
-          columns={columns}
-          loading={isLoading}
-          autoHeight
-          paginationMode="server"
-          rowCount={data?.pagination.totalItems || 0}
-          paginationModel={{ page, pageSize: 20 }}
-          onPaginationModelChange={(model) => setPage(model.page)}
-          getRowId={(row) => row.id}
-          disableRowSelectionOnClick
-          rowHeight={72}
-          sx={{
-            border: "none",
-            "& .MuiDataGrid-columnHeaders": {
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#F9FAFB',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            },
-            "& .MuiDataGrid-cell:focus": { outline: "none" },
-          }}
-        />
-      </Paper>
-
-      {/* Manage Branches Dialog */}
-      <Dialog
-        open={Boolean(selectedBusiness)}
-        onClose={() => setSelectedBusiness(null)}
-        fullWidth
-        maxWidth="lg"
-        PaperProps={{
-          sx: { borderRadius: 3, p: 1 }
-        }}
-      >
-        <DialogTitle sx={{ px: 3, pt: 3, pb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar src={selectedBusiness?.businessImageUrl || undefined} sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-              <BusinessIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="h5" fontWeight="700">
-                {selectedBusiness?.name}
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                Manage branch verification and details
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ mb: 6 }}>
+        {/* Header */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+              <GradientBox gradient="secondary" sx={{ p: 0.75, width: "auto" }}>
+                <StoreIcon fontSize="small" />
+              </GradientBox>
+              <Typography
+                variant="overline"
+                sx={{
+                  fontWeight: 800,
+                  color: "secondary.main",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                Registry System
               </Typography>
             </Box>
+            <Typography variant="h3" sx={{ fontWeight: 900, mb: 1 }}>
+              Businesses
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ fontWeight: 500 }}
+            >
+              Consolidated management of all organizational entities on the
+              platform.
+            </Typography>
           </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0, borderTop: 'none' }}>
-          {selectedBusiness && (
-            <BranchList
-              businessId={selectedBusiness.id}
-              branches={selectedBusiness.branches}
-              onUpdateStatus={updateStatus}
-              onDeleteBranch={deleteBranch}
-              isUpdatingStatus={isUpdatingStatus}
-              isDeletingBranch={isDeletingBranch}
-            />
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button 
-            onClick={() => setSelectedBusiness(null)}
+        </Box>
+
+        {/* Controls */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", md: "center" },
+            gap: 2,
+            mb: 4
+          }}
+        >
+          {/* Search */}
+          <TextField
+            placeholder="Search by name or email..."
             variant="outlined"
-            sx={{ borderRadius: 2, px: 3 }}
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              flex: { xs: 1, md: 0 },
+              minWidth: { xs: "100%", md: 280 },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 3,
+                bgcolor: "background.paper",
+                boxShadow: theme.customShadows.sm,
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* Status Filter */}
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: { xs: "100%", md: 200 },
+            }}
           >
-            Done
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  );
-};
-
-const BranchList = ({
-  businessId,
-  branches,
-  onUpdateStatus,
-  onDeleteBranch,
-  isUpdatingStatus,
-  isDeletingBranch,
-}: {
-  businessId: string;
-  branches: BranchModel[];
-  onUpdateStatus: (params: { businessId: string; data: UpdateBranchStatusDto }) => void;
-  onDeleteBranch: (branchId: string) => void;
-  isUpdatingStatus?: boolean;
-  isDeletingBranch?: boolean;
-}) => {
-  const theme = useTheme();
-
-  if (branches.length === 0) {
-    return (
-      <Box sx={{ py: 8, textAlign: "center" }}>
-        <BusinessIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2, opacity: 0.2 }} />
-        <Typography color="text.secondary" fontWeight="500">
-          No branches found for this business.
-        </Typography>
+            <Select
+              value={statusFilter}
+              onChange={(e: SelectChangeEvent) =>
+                setStatusFilter(e.target.value)
+              }
+              sx={{
+                borderRadius: 3,
+                bgcolor: "background.paper",
+                boxShadow: theme.customShadows.sm,
+              }}
+            >
+              <MenuItem value="all">All Statuses</MenuItem>
+              <MenuItem value="approved">✓ Approved Only</MenuItem>
+              <MenuItem value="pending">⏳ Pending Only</MenuItem>
+              <MenuItem value="rejected">✗ Rejected Only</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
-    );
-  }
 
-  return (
-    <Box sx={{ width: "100%" }}>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#F9FAFB' }}>
-              <TableCell sx={{ fontWeight: 600, py: 2 }}>Branch Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Operating Hours</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>Control</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {branches.map((branch) => (
-              <TableRow key={branch.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'action.hover' }}>
-                      <LocationIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" fontWeight="600">
-                        {branch.branchName}
-                      </Typography>
-                      {branch.isNewBranch && (
-                        <Chip
-                          label="New Registration"
-                          size="small"
-                          color="info"
-                          sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, borderRadius: '4px' }}
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={getStatusBadge(branch.status)}
-                    size="small"
-                    color={getStatusColor(branch.status).replace('info', 'default') as "default" | "success" | "warning" | "error" | "info"}
-                    variant="filled"
-                    sx={{ 
-                      fontWeight: 600, 
-                      borderRadius: '6px',
-                      bgcolor: `${getStatusColor(branch.status)}.light`,
-                      color: `${getStatusColor(branch.status)}.contrastText`
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  {branch.location ? (
-                    <Tooltip title={branch.location.addressDescription}>
-                      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 200 }} noWrap>
-                        {branch.location.addressDescription}
-                      </Typography>
-                    </Tooltip>
-                  ) : (
-                    <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
-                      No coordinates
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {branch.businessHours && branch.businessHours.length > 0 ? (
-                    <Tooltip title={formatBusinessHours(branch.businessHours)}>
-                      <Chip
-                        icon={<TimeIcon sx={{ fontSize: "14px !important" }} />}
-                        label={`${branch.businessHours.length} Days`}
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontSize: '0.75rem', borderRadius: '6px' }}
-                      />
-                    </Tooltip>
-                  ) : (
-                    <Typography variant="caption" color="text.disabled">
-                      Closed session
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    {branch.status !== "Approved" && (
-                      <Tooltip title="Approve Verification">
-                        <IconButton
-                          size="small"
-                          color="success"
-                          disabled={isUpdatingStatus}
-                          onClick={() =>
-                            onUpdateStatus({
-                              businessId,
-                              data: {
-                                status: "Approved",
-                                branchId: branch.id,
-                              },
-                            })
-                          }
-                          sx={{ bgcolor: 'success.light', color: 'success.contrastText', '&:hover': { bgcolor: 'success.main' } }}
-                        >
-                          <ApproveIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {branch.status !== "Rejected" && (
-                      <Tooltip title="Deny Application">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          disabled={isUpdatingStatus}
-                          onClick={() =>
-                            onUpdateStatus({
-                              businessId,
-                              data: {
-                                status: "Rejected",
-                                branchId: branch.id,
-                              },
-                            })
-                          }
-                          sx={{ bgcolor: 'error.light', color: 'error.contrastText', '&:hover': { bgcolor: 'error.main' } }}
-                        >
-                          <RejectIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <IconButton
-                      size="small"
-                      disabled={isDeletingBranch}
-                      onClick={() => {
-                        if (confirm("Permanently delete this branch?")) {
-                          onDeleteBranch(branch.id);
-                        }
+      <Paper
+        elevation={0}
+        component={motion.div}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{
+          width: "100%",
+          borderRadius: 4,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+          boxShadow: theme.customShadows.soft,
+        }}
+      >
+        <Box sx={{ width: "100%", overflowX: "auto" }}>
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            loading={isLoading}
+            autoHeight
+            paginationMode="server"
+            rowCount={data?.pagination.totalItems || 0}
+            paginationModel={{ page, pageSize: 20 }}
+            onPaginationModelChange={(model) => setPage(model.page)}
+            getRowId={(row) => row.id}
+            disableRowSelectionOnClick
+            rowHeight={92}
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-columnHeader": {
+                bgcolor: alpha(theme.palette.background.default, 0.4),
+                borderBottom: "1.5px solid",
+                borderColor: "divider",
+                px: 4,
+              },
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontWeight: 800,
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "text.tertiary",
+              },
+              "& .MuiDataGrid-cell": {
+                px: 4,
+                borderColor: alpha(theme.palette.divider, 0.5),
+              },
+              "& .MuiDataGrid-row:hover": {
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1.5px solid",
+                borderColor: "divider",
+              },
+            }}
+          />
+        </Box>
+      </Paper>
+
+      <AnimatePresence>
+        {selectedBusiness && (
+          <Dialog
+            open={Boolean(selectedBusiness)}
+            onClose={() => setSelectedBusiness(null)}
+            fullWidth
+            maxWidth="lg"
+            PaperProps={{
+              sx: {
+                borderRadius: 5,
+                p: 0,
+                boxShadow: theme.customShadows.xl,
+                overflow: "hidden",
+                position: "relative",
+              },
+            }}
+          >
+            {isUpdatingStatus && (
+              <LinearProgress
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 6,
+                  zIndex: 10,
+                }}
+              />
+            )}
+            <Box
+              sx={{
+                p: 5,
+                background: theme.gradients.surface,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Avatar
+                  src={selectedBusiness?.businessImageUrl || undefined}
+                  variant="rounded"
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    background: theme.gradients.primary,
+                    color: "white",
+                    borderRadius: 3,
+                    boxShadow: theme.customShadows.md,
+                  }}
+                >
+                  <BusinessIcon sx={{ fontSize: 36 }} />
+                </Avatar>
+                <Box>
+                  <Typography variant="h4" sx={{ fontWeight: 900, mb: 0.5 }}>
+                    {selectedBusiness?.name}
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        bgcolor: "success.main",
+                        borderRadius: "50%",
                       }}
-                      sx={{ 
-                        '&:hover': { 
-                          bgcolor: 'error.light', 
-                          color: 'error.contrastText' 
-                        } 
-                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ fontWeight: 700 }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      Audit Console: {selectedBusiness?.branches.length}{" "}
+                      Physical Records
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <DialogContent
+              sx={{
+                p: 0,
+                opacity: isUpdatingStatus ? 0.6 : 1,
+                pointerEvents: isUpdatingStatus ? "none" : "auto",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <BranchList
+                businessId={selectedBusiness.id}
+                branches={selectedBusiness.branches}
+                onUpdateStatus={(params) => {
+                  updateStatus(params, {
+                    onSuccess: () => setSelectedBusiness(null)
+                  });
+                }}
+                onDeleteBranch={deleteBranch}
+                isUpdatingStatus={isUpdatingStatus}
+                isDeletingBranch={isDeletingBranch}
+              />
+            </DialogContent>
+            <DialogActions sx={{ p: 4, bgcolor: "background.default" }}>
+              <Button
+                onClick={() => setSelectedBusiness(null)}
+                variant="contained"
+                disabled={isUpdatingStatus}
+                sx={{
+                  px: 6,
+                  py: 1.5,
+                  borderRadius: 3,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  color: "white",
+                }}
+              >
+                Exit Audit Mode
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </Box>
   );
 };

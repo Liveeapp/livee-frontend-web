@@ -47,7 +47,21 @@ export const CACHE_TIMES = {
 
 // UI Constants
 export const UI = {
-  SIDEBAR_WIDTH: 250,
+  SIDEBAR_WIDTH: 280,
   TOPBAR_HEIGHT: 64,
   THEME_TRANSITION_DURATION: 300,
+} as const;
+
+// Business List Constants
+export const BUSINESS_LIST = {
+  PAGE_LIMIT: 20,
+  STALE_TIME: 30000, // 30 seconds
+  GC_TIME: 5 * 60 * 1000, // 5 minutes
+} as const;
+
+// Status Types
+export const STATUS_TYPES = {
+  APPROVED: "Approved",
+  PENDING: "Pending",
+  REJECTED: "Rejected",
 } as const;

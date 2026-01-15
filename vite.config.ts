@@ -11,15 +11,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  esbuild: {
+    drop: ["console", "debugger"],
+  },
   build: {
     // Optimize build output
     target: "ES2020",
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-      },
-    },
     // Code splitting for better caching
     rollupOptions: {
       output: {

@@ -10,27 +10,19 @@ cd /var/www/liveeapp.io/html
 # Pull the latest changes
 git pull origin main
 
-# Ensure the shared network exists
-docker network create livee-network || true
-
-# Stop and remove the old frontend container if running
-docker-compose -f docker-compose.yaml down
-
-# Build the frontend container (no-cache to ensure clean build)
-docker-compose -f docker-compose.yaml build --no-cache
-
-# Start the frontend container (detached)
-# Note: This will NOT expose ports 80/443 anymore.
-# It joins 'livee-network' and waits for the Backend Nginx to proxy valid requests.
-docker-compose -f docker-compose.yaml up -d
+# Build and start the frontend container
+# It will join the 'livee-backend_livee-network' automatically
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
 
 # Check logs to ensure it's healthy
 docker logs livee-frontend-web
 
 # 2. Update Backend Nginx Configuration
 # -------------------------------------
+# IMPORTANT: The path MUST be /internal/admin/ to match the React app build.
 # The frontend repo contains 'backend-nginx.conf' with the required settings.
-# You need to apply these to your BACKEND's nginx.ssl.conf.
 
 # Go to your backend directory
 cd /opt/livee-backend
@@ -39,8 +31,8 @@ cd /opt/livee-backend
 # upstream livee_frontend { server livee-frontend-web:3008; }
 
 # 2. Add the location blocks (inside the HTTPS server block):
-# location /admin-portal/ {
-#     proxy_pass http://livee_frontend/;
+# location /internal/admin/ {
+#     proxy_pass http://livee_frontend/internal/admin/;
 #     proxy_http_version 1.1;
 #     proxy_set_header Upgrade $http_upgrade;
 #     proxy_set_header Connection 'upgrade';
@@ -51,8 +43,8 @@ cd /opt/livee-backend
 #     proxy_cache_bypass $http_upgrade;
 # }
 #
-# location /admin-portal {
-#     return 301 /admin-portal/;
+# location /internal/admin {
+#     return 301 /internal/admin/;
 # }
 
 # Restart the Backend Nginx to apply changes
@@ -60,9 +52,8 @@ docker-compose restart nginx
 
 # 3. Verification
 # ---------------
-# Admin Dashboard (React): https://liveeapp.io/admin-portal/
-# Authentication API:      https://liveeapp.io/auth/
-# Admin Service API:      https://liveeapp.io/admin/
+# Admin Dashboard (React): https://liveeapp.io/internal/admin/
+# Backend Admin API:      https://liveeapp.io/admin/
 
 # NOTE: The React frontend is now COMPLETELY SEPARATE from the /admin/ API path
-# to prevent conflicts and improve security.
+# to prevent conflicts. It matches the base: "/internal/admin/" in vite.config.ts.

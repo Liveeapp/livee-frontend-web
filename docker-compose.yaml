@@ -11,7 +11,7 @@ services:
     container_name: livee-frontend-web
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
       - "443:443"
     # volumes:
       # SSL certificates (mount from host)

@@ -37,7 +37,10 @@ RUN apk add --no-cache curl
 RUN rm -rf /etc/nginx/conf.d/*
 
 # Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Use nginx.network.conf for Docker network deployment
+# Use nginx.conf for standalone/local development
+ARG NGINX_CONFIG=nginx.network.conf
+COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html

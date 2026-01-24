@@ -1,13 +1,13 @@
 # ==========================================
-# DEPLOYMENT INSTRUCTIONS
+# DEPLOYMENT INSTRUCTIONS: Frontend + Backend Integration
 # ==========================================
 
-# 1. Frontend Web App Deployment
+# 1. Frontend Web App Deployment (Admin Dashboard)
 # ------------------------------
-# SSH into the server and go to the text directory
+# SSH into the server and go to the frontend directory
 cd /var/www/liveeapp.io/html
 
-# Pull the latest changes (including new docker-compose and proxy config)
+# Pull the latest changes
 git pull origin main
 
 # Ensure the shared network exists
@@ -24,28 +24,45 @@ docker-compose -f docker-compose.yaml build --no-cache
 # It joins 'livee-network' and waits for the Backend Nginx to proxy valid requests.
 docker-compose -f docker-compose.yaml up -d
 
-# Check logs to ensure it started
+# Check logs to ensure it's healthy
 docker logs livee-frontend-web
 
 # 2. Update Backend Nginx Configuration
 # -------------------------------------
-# The frontend repo now contains a file 'backend-nginx.conf'.
-# You need to copy this content to your Backend Nginx configuration.
+# The frontend repo contains 'backend-nginx.conf' with the required settings.
+# You need to apply these to your BACKEND's nginx.ssl.conf.
 
 # Go to your backend directory
 cd /opt/livee-backend
 
-# Backup existing config (if needed)
-# cp nginx.ssl.conf nginx.ssl.conf.bak
+# 1. Add the upstream (before the server blocks):
+# upstream livee_frontend { server livee-frontend-web:3008; }
 
-# Copy the new config from the frontend integration
-# Assuming you pulled the frontend repo in /var/www/liveeapp.io/html
-cp /var/www/liveeapp.io/html/backend-nginx.conf ./nginx.ssl.conf
+# 2. Add the location blocks (inside the HTTPS server block):
+# location /admin-portal/ {
+#     proxy_pass http://livee_frontend/;
+#     proxy_http_version 1.1;
+#     proxy_set_header Upgrade $http_upgrade;
+#     proxy_set_header Connection 'upgrade';
+#     proxy_set_header Host $host;
+#     proxy_set_header X-Real-IP $remote_addr;
+#     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#     proxy_set_header X-Forwarded-Proto $scheme;
+#     proxy_cache_bypass $http_upgrade;
+# }
+#
+# location /admin-portal {
+#     return 301 /admin-portal/;
+# }
 
 # Restart the Backend Nginx to apply changes
 docker-compose restart nginx
 
 # 3. Verification
 # ---------------
-# Access https://liveeapp.io/internal/admin/ -> Should show the React App
-# Access https://liveeapp.io/auth/ -> Should hit the Auth Service
+# Admin Dashboard (React): https://liveeapp.io/admin-portal/
+# Authentication API:      https://liveeapp.io/auth/
+# Admin Service API:      https://liveeapp.io/admin/
+
+# NOTE: The React frontend is now COMPLETELY SEPARATE from the /admin/ API path
+# to prevent conflicts and improve security.

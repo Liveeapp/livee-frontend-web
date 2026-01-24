@@ -1,21 +1,25 @@
 # ============================================
 # Livee Frontend Web - Docker Compose Production
+# Configured to join the backend livee-network
 # ============================================
 
 services:
-  # Frontend Web Application
+  # Frontend Web Application (Admin Dashboard)
   livee-web:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NGINX_CONFIG=nginx.network.conf
     container_name: livee-frontend-web
     restart: unless-stopped
     # Ports are managed by the main livee-nginx proxy
+    # Port 3008 is exposed internally for the backend nginx to proxy
     expose:
       - "3008"
     volumes:
-      # Nginx configuration (internal)
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Use network-aware nginx configuration
+      - ./nginx.network.conf:/etc/nginx/conf.d/default.conf:ro
     environment:
       - TZ=UTC
     networks:
@@ -35,4 +39,5 @@ services:
 networks:
   livee-network:
     external: true
-    name: livee-network
+    name: livee-backend_livee-network
+

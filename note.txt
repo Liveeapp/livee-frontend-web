@@ -1,0 +1,51 @@
+ssh root@65.21.248.217
+root user pass: [REDACTED]
+
+cd /opt/livee-backend
+
+docker-compose -f docker-compose.yml down
+
+git pull origin master
+
+docker-compose -f docker-compose.yml build --no-cache
+
+docker-compose -f docker-compose.yml up -d
+
+# Check all containers are running
+docker ps
+
+# View logs
+docker-compose -f docker-compose.yml logs -f
+
+
+
+
+
+
+cp nginx.ssl.conf nginx.conf
+docker compose restart nginx
+# Test health endpoints
+curl http://localhost:3001/health  # Authentication
+curl http://localhost:3002/health  # Users
+curl http://localhost:3003/health  # Email Verification
+curl http://localhost:3004/health  # Businesses
+curl http://localhost:3005/health  # Content
+curl http://localhost:3006/health  # Engagements
+docker-compose -f docker-compose.yml logs -f users
+
+
+
+
+docker-compose -f docker-compose.yml logs -f | grep --line-buffered -v "health"
+
+
+
+#Web App
+ssh root@65.21.248.217
+root user pass: [REDACTED]
+cd /var/www/liveeapp.io/html
+
+
+
+
+git token: [REDACTED]

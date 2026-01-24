@@ -3,19 +3,19 @@ root user pass: [REDACTED]
 
 cd /opt/livee-backend
 
-docker-compose -f docker-compose.yml down
+docker-compose -f docker-compose.yaml down
 
 git pull origin master
 
-docker-compose -f docker-compose.yml build --no-cache
+docker-compose -f docker-compose.yaml build --no-cache
 
-docker-compose -f docker-compose.yml up -d
+docker-compose -f docker-compose.yaml up -d
 
 # Check all containers are running
 docker ps
 
 # View logs
-docker-compose -f docker-compose.yml logs -f
+docker-compose -f docker-compose.yaml logs -f
 
 
 
@@ -44,6 +44,21 @@ docker-compose -f docker-compose.yml logs -f | grep --line-buffered -v "health"
 ssh root@65.21.248.217
 root user pass: [REDACTED]
 cd /var/www/liveeapp.io/html
+
+# STOP OLD NGINX TO FREE PORTS 80/443
+docker stop livee-nginx
+docker rm livee-nginx
+
+docker-compose -f docker-compose.yaml down
+
+git pull origin main
+
+docker-compose -f docker-compose.yaml build --no-cache
+
+docker-compose -f docker-compose.yaml up -d
+
+# View logs
+docker-compose -f docker-compose.yaml logs -f
 
 
 

@@ -43,7 +43,9 @@ ARG NGINX_CONFIG=nginx.network.conf
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# We copy them to the /internal/admin subfolder to match the vite base path
+RUN mkdir -p /usr/share/nginx/html/internal/admin
+COPY --from=builder /app/dist /usr/share/nginx/html/internal/admin
 
 # Create directory for SSL certificates
 RUN mkdir -p /etc/nginx/ssl

@@ -3,19 +3,15 @@ import react from "@vitejs/plugin-react";
 import * as path from "path";
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
+  base: "/internal/admin/",
   plugins: [react()],
-  esbuild: {
-    drop: mode === "production" ? ["console", "debugger"] : [],
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
+    },  
   },
-  esbuild: {
-    drop: ["console", "debugger"],
-  },
+
   build: {
     // Optimize build output
     target: "ES2020",
@@ -50,4 +46,4 @@ export default defineConfig(({ mode }) => ({
       "recharts",
     ],
   },
-}));
+});

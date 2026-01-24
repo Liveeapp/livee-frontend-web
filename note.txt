@@ -1,66 +1,48 @@
-ssh root@65.21.248.217
-root user pass: [REDACTED]
+# ==========================================
+# DEPLOYMENT INSTRUCTIONS
+# ==========================================
 
-cd /opt/livee-backend
-
-docker-compose -f docker-compose.yaml down
-
-git pull origin master
-
-docker-compose -f docker-compose.yaml build --no-cache
-
-docker-compose -f docker-compose.yaml up -d
-
-# Check all containers are running
-docker ps
-
-# View logs
-docker-compose -f docker-compose.yaml logs -f
-
-
-
-
-
-
-cp nginx.ssl.conf nginx.conf
-docker compose restart nginx
-# Test health endpoints
-curl http://localhost:3001/health  # Authentication
-curl http://localhost:3002/health  # Users
-curl http://localhost:3003/health  # Email Verification
-curl http://localhost:3004/health  # Businesses
-curl http://localhost:3005/health  # Content
-curl http://localhost:3006/health  # Engagements
-docker-compose -f docker-compose.yml logs -f users
-
-
-
-
-docker-compose -f docker-compose.yml logs -f | grep --line-buffered -v "health"
-
-
-
-#Web App
-ssh root@65.21.248.217
-root user pass: [REDACTED]
+# 1. Frontend Web App Deployment
+# ------------------------------
+# SSH into the server and go to the text directory
 cd /var/www/liveeapp.io/html
 
-# STOP OLD NGINX TO FREE PORTS 80/443
-docker stop livee-nginx
-docker rm livee-nginx
-
-docker-compose -f docker-compose.yaml down
-
+# Pull the latest changes (including new docker-compose and proxy config)
 git pull origin main
 
+# Stop and remove the old frontend container if running
+docker-compose -f docker-compose.yaml down
+
+# Build the frontend container (no-cache to ensure clean build)
 docker-compose -f docker-compose.yaml build --no-cache
 
+# Start the frontend container (detached)
+# Note: This will NOT expose ports 80/443 anymore.
+# It joins 'livee-network' and waits for the Backend Nginx to proxy valid requests.
 docker-compose -f docker-compose.yaml up -d
 
-# View logs
-docker-compose -f docker-compose.yaml logs -f
+# Check logs to ensure it started
+docker logs livee-frontend-web
 
+# 2. Update Backend Nginx Configuration
+# -------------------------------------
+# The frontend repo now contains a file 'backend-nginx.conf'.
+# You need to copy this content to your Backend Nginx configuration.
 
+# Go to your backend directory
+cd /opt/livee-backend
 
+# Backup existing config (if needed)
+# cp nginx.ssl.conf nginx.ssl.conf.bak
 
-git token: [REDACTED]
+# Copy the new config from the frontend integration
+# Assuming you pulled the frontend repo in /var/www/liveeapp.io/html
+cp /var/www/liveeapp.io/html/backend-nginx.conf ./nginx.ssl.conf
+
+# Restart the Backend Nginx to apply changes
+docker-compose restart nginx
+
+# 3. Verification
+# ---------------
+# Access https://liveeapp.io/internal/admin/ -> Should show the React App
+# Access https://liveeapp.io/auth/ -> Should hit the Auth Service

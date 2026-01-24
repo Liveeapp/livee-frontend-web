@@ -10,6 +10,9 @@ cd /var/www/liveeapp.io/html
 # Pull the latest changes (including new docker-compose and proxy config)
 git pull origin main
 
+# Ensure the shared network exists
+docker network create livee-network || true
+
 # Stop and remove the old frontend container if running
 docker-compose -f docker-compose.yaml down
 

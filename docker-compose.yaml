@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
     # Ports are managed by the main livee-nginx proxy
     expose:
-      - "80"
+      - "3008"
     volumes:
       # Nginx configuration (internal)
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
@@ -21,7 +21,7 @@ services:
     networks:
       - livee-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -51,10 +51,10 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD curl -f http://localhost:3008/health || exit 1
 
 # Expose ports
-EXPOSE 80 443
+EXPOSE 3008
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

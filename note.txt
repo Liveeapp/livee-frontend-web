@@ -28,7 +28,7 @@ docker logs livee-frontend-web
 cd /opt/livee-backend
 
 # 1. Add the upstream (before the server blocks):
-# upstream livee_frontend { server livee-frontend-web:3008; }
+# upstream livee_frontend { server livee-frontend-web:3009; }
 
 # 2. Add the location blocks (inside the HTTPS server block):
 # location /internal/admin/ {

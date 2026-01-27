@@ -49,7 +49,7 @@ A modern, professional React + TypeScript + Vite admin console application. Buil
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start dev server (http://localhost:5173) |
+| `npm run dev` | Start dev server (http://localhost:3009) |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint checks |
@@ -171,7 +171,7 @@ VITE_ENABLE_DEVTOOLS=true
 npm run dev
 ```
 
-Access the application at **http://localhost:5173**
+Access the application at **http://localhost:3009**
 
 #### Features
 - ⚡ Hot Module Replacement (HMR) - instant updates
@@ -179,6 +179,16 @@ Access the application at **http://localhost:5173**
 - 📊 React Query DevTools (in development)
 - 🌓 Dark mode support
 - 🎨 Material-UI theming
+
+### Running on Production
+
+Use Docker Compose to build and run the production-ready container:
+
+```bash
+docker-compose down
+docker-compose build --no-cache; docker-compose up -d
+```
+
 
 ## 🎯 Linting & Code Quality
 

@@ -29,6 +29,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
   },
   server: {
+    port: 3009,
     // Hot module replacement for faster dev
     middlewareMode: false,
   },

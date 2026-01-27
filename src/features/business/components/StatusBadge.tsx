@@ -1,7 +1,7 @@
 import { Chip, alpha, useTheme } from "@mui/material";
 
 interface StatusBadgeProps {
-  status: "Approved" | "Pending" | "Rejected";
+  status: "Approved" | "Pending" | "Rejected" | "Deleted";
   label?: string;
 }
 
@@ -20,6 +20,7 @@ const getStatusBadgeStyles = (
     Approved: { color: "success", label: "APPROVED" },
     Pending: { color: "warning", label: "PENDING" },
     Rejected: { color: "error", label: "REJECTED" },
+    Deleted: { color: "info", label: "DELETED" },
   };
   return statusMap[status] || { color: "info", label: status.toUpperCase() };
 };

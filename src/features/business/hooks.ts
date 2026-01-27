@@ -165,7 +165,7 @@ export const useDeleteBranch = () => {
 
       const previousDataMap = new Map();
 
-      // Optimistically remove branch from all cached queries
+      // Optimistically mark branch as deleted in all cached queries
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
@@ -173,7 +173,11 @@ export const useDeleteBranch = () => {
             ...oldData,
             data: oldData.data.map((business) => ({
               ...business,
-              branches: business.branches.filter((branch) => branch.id !== id),
+              branches: business.branches.map((branch) =>
+                branch.id === id
+                  ? { ...branch, deletedAt: new Date().toISOString() }
+                  : branch
+              ),
             })),
           });
         }

@@ -9,9 +9,9 @@ export const ROUTES = {
     LOGIN: "/login",
   },
   ADMIN: {
-    DASHBOARD: "/admin/dashboard",
-    BUSINESSES: "/admin/businesses",
-    PROFILE: "/admin/profile",
+    DASHBOARD: "/dashboard",
+    BUSINESSES: "/businesses",
+    PROFILE: "/profile",
   },
   ROOT: "/",
 } as const;

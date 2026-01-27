@@ -25,6 +25,7 @@ export interface BranchModel {
   isNewBranch: boolean;
   location: BusinessLocation | null;
   businessHours: BusinessHours[];
+  deletedAt?: string | null;
 }
 
 export interface BusinessOwner {

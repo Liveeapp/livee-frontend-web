@@ -104,16 +104,17 @@ export const BranchList = ({
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                         {branch.branchName}
                       </Typography>
-                      {branch.isNewBranch && (
+    
+                      {branch.deletedAt && (
                         <Typography
                           variant="caption"
                           sx={{
-                            color: "info.main",
+                            color: "error.main",
                             fontWeight: 900,
                             letterSpacing: "0.05em",
                           }}
                         >
-                          NEW REQUEST
+                          DELETED
                         </Typography>
                       )}
                     </Box>
@@ -122,7 +123,11 @@ export const BranchList = ({
                 <TableCell>
                   <StatusBadge
                     status={
-                      branch.status as "Approved" | "Pending" | "Rejected"
+                      (branch.deletedAt ? "Deleted" : branch.status) as
+                        | "Approved"
+                        | "Pending"
+                        | "Rejected"
+                        | "Deleted"
                     }
                   />
                 </TableCell>
@@ -144,7 +149,7 @@ export const BranchList = ({
                     {branch.status !== "Approved" && (
                       <IconButton
                         size="small"
-                        disabled={isUpdatingStatus}
+                        disabled={isUpdatingStatus || !!branch.deletedAt}
                         onClick={() =>
                           onUpdateStatus({
                             businessId,
@@ -155,11 +160,21 @@ export const BranchList = ({
                           })
                         }
                         sx={{
-                          background: theme.gradients.success,
+                          background: branch.deletedAt
+                            ? theme.palette.action.disabledBackground
+                            : theme.gradients.success,
                           color: "white",
-                          "&:hover": { transform: "translateY(-2px)" },
+                          "&:hover": {
+                            transform: branch.deletedAt
+                              ? "none"
+                              : "translateY(-2px)",
+                          },
                         }}
-                        title="Approve this branch"
+                        title={
+                          branch.deletedAt
+                            ? "Cannot approve deleted branch"
+                            : "Approve this branch"
+                        }
                       >
                         <ApproveIcon fontSize="small" />
                       </IconButton>
@@ -167,7 +182,7 @@ export const BranchList = ({
                     {branch.status !== "Rejected" && (
                       <IconButton
                         size="small"
-                        disabled={isUpdatingStatus}
+                        disabled={isUpdatingStatus || !!branch.deletedAt}
                         onClick={() =>
                           onUpdateStatus({
                             businessId,
@@ -178,18 +193,28 @@ export const BranchList = ({
                           })
                         }
                         sx={{
-                          background: theme.gradients.error,
+                          background: branch.deletedAt
+                            ? theme.palette.action.disabledBackground
+                            : theme.gradients.error,
                           color: "white",
-                          "&:hover": { transform: "translateY(-2px)" },
+                          "&:hover": {
+                            transform: branch.deletedAt
+                              ? "none"
+                              : "translateY(-2px)",
+                          },
                         }}
-                        title="Reject this branch"
+                        title={
+                          branch.deletedAt
+                            ? "Cannot reject deleted branch"
+                            : "Reject this branch"
+                        }
                       >
                         <RejectIcon fontSize="small" />
                       </IconButton>
                     )}
                     <IconButton
                       size="small"
-                      disabled={isDeletingBranch}
+                      disabled={isDeletingBranch || !!branch.deletedAt}
                       onClick={() => {
                         if (confirm("Delete this branch permanently?")) {
                           onDeleteBranch(branch.id);
@@ -201,7 +226,11 @@ export const BranchList = ({
                           bgcolor: alpha(theme.palette.error.main, 0.1),
                         },
                       }}
-                      title="Delete this branch"
+                      title={
+                        branch.deletedAt
+                          ? "Branch already deleted"
+                          : "Delete this branch"
+                      }
                     >
                       {isDeletingBranch ? (
                         <CircularProgress size={16} />

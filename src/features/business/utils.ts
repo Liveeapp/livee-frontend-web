@@ -101,15 +101,19 @@ export const formatDate = (dateString: string | null): string => {
  * Get branch status summary counts
  */
 export const getBranchStatusCounts = (
-  branches: { status: BranchStatus }[] = []
+  branches: { status: BranchStatus; deletedAt?: string | null }[] = []
 ) => {
   if (!branches || !Array.isArray(branches)) {
-    return { Approved: 0, Pending: 0, Rejected: 0 };
+    return { Approved: 0, Pending: 0, Rejected: 0, Deleted: 0 };
   }
   return {
-    Approved: branches.filter((b) => b.status === "Approved").length,
-    Pending: branches.filter((b) => b.status === "Pending").length,
-    Rejected: branches.filter((b) => b.status === "Rejected").length,
+    Approved: branches.filter((b) => !b.deletedAt && b.status === "Approved")
+      .length,
+    Pending: branches.filter((b) => !b.deletedAt && b.status === "Pending")
+      .length,
+    Rejected: branches.filter((b) => !b.deletedAt && b.status === "Rejected")
+      .length,
+    Deleted: branches.filter((b) => !!b.deletedAt).length,
   };
 };
 

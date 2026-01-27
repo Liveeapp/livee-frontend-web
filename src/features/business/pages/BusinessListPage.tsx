@@ -83,6 +83,7 @@ export const BusinessListPage = () => {
         if (statusFilter === "approved") return counts.Approved > 0;
         if (statusFilter === "pending") return counts.Pending > 0;
         if (statusFilter === "rejected") return counts.Rejected > 0;
+        if (statusFilter === "deleted") return counts.Deleted > 0;
         return true;
       });
     }
@@ -272,6 +273,30 @@ export const BusinessListPage = () => {
                   </Box>
                 </Tooltip>
               )}
+              {counts.Deleted > 0 && (
+                <Tooltip title="Deleted Branches">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      bgcolor: "text.tertiary",
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1.25,
+                      color: "white",
+                    }}
+                  >
+                    <DeleteIcon sx={{ fontSize: 14 }} />
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                    >
+                      {counts.Deleted}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )}
             </Stack>
             <Button
               size="small"
@@ -443,6 +468,7 @@ export const BusinessListPage = () => {
               <MenuItem value="approved">✓ Approved Only</MenuItem>
               <MenuItem value="pending">⏳ Pending Only</MenuItem>
               <MenuItem value="rejected">✗ Rejected Only</MenuItem>
+              <MenuItem value="deleted">🗑 Deleted Only</MenuItem>
             </Select>
           </FormControl>
         </Box>

@@ -19,7 +19,7 @@ export const DashboardPage = () => {
   const { data, isLoading } = useBusinesses();
 
   const stats = useMemo(() => {
-    if (!data)
+    if (!data || !Array.isArray(data))
       return {
         approved: 0,
         pending: 0,
@@ -120,7 +120,7 @@ export const DashboardPage = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Businesses"
-            value={data?.length.toLocaleString() || "0"}
+            value={Array.isArray(data) ? data.length.toLocaleString() : "0"}
             subtitle="Registered partners"
             icon={<BusinessIcon />}
             color="primary"

@@ -16,10 +16,10 @@ import {
 import type { BusinessType } from "@/features/business/types";
 export const DashboardPage = () => {
   // Fetch a larger snapshot for calculations
-  const { data, isLoading } = useBusinesses(1, 100);
+  const { data, isLoading } = useBusinesses();
 
   const stats = useMemo(() => {
-    if (!data?.data)
+    if (!data)
       return {
         approved: 0,
         pending: 0,
@@ -32,7 +32,7 @@ export const DashboardPage = () => {
     let rejected = 0;
     const categories: Record<string, number> = {};
 
-    data.data.forEach((business) => {
+    data.forEach((business) => {
       const counts = getBranchStatusCounts(business.branches);
       approved += counts.Approved;
       pending += counts.Pending;
@@ -46,7 +46,7 @@ export const DashboardPage = () => {
   }, [data]);
 
   const progressItems = useMemo(() => {
-    const total = data?.pagination.totalItems || 1;
+    const total = data?.length || 1;
     return Object.entries(stats.categories)
       .map(([label, count]) => ({
         label: getBusinessTypeLabel(label as BusinessType),
@@ -54,7 +54,7 @@ export const DashboardPage = () => {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  }, [stats.categories, data?.pagination.totalItems]);
+  }, [stats.categories, data?.length]);
 
   if (isLoading) {
     return (
@@ -120,7 +120,7 @@ export const DashboardPage = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Businesses"
-            value={data?.pagination.totalItems.toLocaleString() || "0"}
+            value={data?.length.toLocaleString() || "0"}
             subtitle="Registered partners"
             icon={<BusinessIcon />}
             color="primary"

@@ -8,17 +8,14 @@ import {
 import type {
   UpdateBranchStatusDto,
   BusinessModel,
-  PaginatedResponse,
+  BranchStatus,
 } from "./types";
 import { BUSINESS_LIST } from "@/shared/constants/appConstants";
 
-export const useBusinesses = (
-  page = 1,
-  limit: number = BUSINESS_LIST.PAGE_LIMIT
-) => {
+export const useBusinesses = (branchStatus?: BranchStatus) => {
   return useQuery({
-    queryKey: ["businesses", page, limit],
-    queryFn: () => getBusinesses(page, limit),
+    queryKey: ["businesses", branchStatus],
+    queryFn: () => getBusinesses(branchStatus),
     staleTime: BUSINESS_LIST.STALE_TIME,
     gcTime: BUSINESS_LIST.GC_TIME,
   });
@@ -41,9 +38,7 @@ export const useUpdateBranchStatus = () => {
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
 
       // Snapshot the previous values
-      const queries = queryClient.getQueriesData<
-        PaginatedResponse<BusinessModel>
-      >({
+      const queries = queryClient.getQueriesData<BusinessModel[]>({
         queryKey: ["businesses"],
       });
 
@@ -53,9 +48,9 @@ export const useUpdateBranchStatus = () => {
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
-          queryClient.setQueryData(queryKey, {
-            ...oldData,
-            data: oldData.data.map((business) => {
+          queryClient.setQueryData(
+            queryKey,
+            oldData.map((business) => {
               if (business.id === businessId) {
                 return {
                   ...business,
@@ -67,8 +62,8 @@ export const useUpdateBranchStatus = () => {
                 };
               }
               return business;
-            }),
-          });
+            })
+          );
         }
       });
 
@@ -103,9 +98,7 @@ export const useDeleteBusiness = () => {
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
 
       // Snapshot the previous values for all business queries
-      const queries = queryClient.getQueriesData<
-        PaginatedResponse<BusinessModel>
-      >({
+      const queries = queryClient.getQueriesData<BusinessModel[]>({
         queryKey: ["businesses"],
       });
 
@@ -115,14 +108,10 @@ export const useDeleteBusiness = () => {
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
-          queryClient.setQueryData(queryKey, {
-            ...oldData,
-            data: oldData.data.filter((business) => business.id !== id),
-            pagination: {
-              ...oldData.pagination,
-              totalItems: Math.max(0, oldData.pagination.totalItems - 1),
-            },
-          });
+          queryClient.setQueryData(
+            queryKey,
+            oldData.filter((business) => business.id !== id)
+          );
         }
       });
 
@@ -157,9 +146,7 @@ export const useDeleteBranch = () => {
       await queryClient.cancelQueries({ queryKey: ["businesses"] });
 
       // Snapshot the previous values for all business queries
-      const queries = queryClient.getQueriesData<
-        PaginatedResponse<BusinessModel>
-      >({
+      const queries = queryClient.getQueriesData<BusinessModel[]>({
         queryKey: ["businesses"],
       });
 
@@ -169,17 +156,17 @@ export const useDeleteBranch = () => {
       queries.forEach(([queryKey, oldData]) => {
         if (oldData) {
           previousDataMap.set(queryKey, oldData);
-          queryClient.setQueryData(queryKey, {
-            ...oldData,
-            data: oldData.data.map((business) => ({
+          queryClient.setQueryData(
+            queryKey,
+            oldData.map((business) => ({
               ...business,
               branches: business.branches.map((branch) =>
                 branch.id === id
                   ? { ...branch, deletedAt: new Date().toISOString() }
                   : branch
               ),
-            })),
-          });
+            }))
+          );
         }
       });
 

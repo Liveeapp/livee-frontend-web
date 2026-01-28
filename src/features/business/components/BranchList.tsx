@@ -19,9 +19,11 @@ import {
   CancelRounded as RejectIcon,
   LocationOnRounded as LocationIcon,
   StorefrontRounded as StoreIcon,
+  ScheduleRounded as PendingIcon,
 } from "@mui/icons-material";
 import type { BranchModel, UpdateBranchStatusDto } from "../types";
 import { StatusBadge, GradientBox, TableHeaderCell } from "./index";
+import { formatDate, getRemainingGraceDays, isGracePeriodActive } from "../utils";
 
 interface BranchListProps {
   businessId: string;
@@ -76,10 +78,11 @@ export const BranchList = ({
           <TableHead>
             <TableRow>
               <TableHeaderCell sx={{ py: 3, px: 5 }}>
-                Location Name
+                Branch Name
               </TableHeaderCell>
               <TableHeaderCell>Audit Status</TableHeaderCell>
               <TableHeaderCell>Verified Address</TableHeaderCell>
+              <TableHeaderCell>Registered</TableHeaderCell>
               <TableHeaderCell align="right" sx={{ px: 5 }}>
                 Audit Controls
               </TableHeaderCell>
@@ -104,7 +107,6 @@ export const BranchList = ({
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                         {branch.branchName}
                       </Typography>
-    
                       {branch.deletedAt && (
                         <Typography
                           variant="caption"
@@ -112,9 +114,20 @@ export const BranchList = ({
                             color: "error.main",
                             fontWeight: 900,
                             letterSpacing: "0.05em",
+                            display: "block",
                           }}
                         >
-                          DELETED
+                          DELETED ON {formatDate(branch.deletedAt)}
+                          <Box
+                            component="span"
+                            sx={{ ml: 1, color: "text.tertiary", opacity: 0.7 }}
+                          >
+                            ({isGracePeriodActive(branch.deletedAt)
+                              ? `${getRemainingGraceDays(
+                                  branch.deletedAt
+                                )} DAYS REMAINING`
+                              : "PERMANENT REMOVAL PENDING"})
+                          </Box>
                         </Typography>
                       )}
                     </Box>
@@ -122,12 +135,11 @@ export const BranchList = ({
                 </TableCell>
                 <TableCell>
                   <StatusBadge
-                    status={
-                      (branch.deletedAt ? "Deleted" : branch.status) as
-                        | "Approved"
-                        | "Pending"
-                        | "Rejected"
-                        | "Deleted"
+                    status={branch.status}
+                    label={
+                      branch.deletedAt && isGracePeriodActive(branch.deletedAt)
+                        ? "DELETION GRACE"
+                        : undefined
                     }
                   />
                 </TableCell>
@@ -144,12 +156,24 @@ export const BranchList = ({
                     {branch.location?.addressDescription || "N/A"}
                   </Typography>
                 </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.tertiary", fontWeight: 700 }}
+                  >
+                    {formatDate(branch.createdAt)}
+                  </Typography>
+                </TableCell>
                 <TableCell align="right" sx={{ px: 5 }}>
                   <Stack direction="row" spacing={2} justifyContent="flex-end">
                     {branch.status !== "Approved" && (
                       <IconButton
                         size="small"
-                        disabled={isUpdatingStatus || !!branch.deletedAt}
+                        disabled={
+                          isUpdatingStatus ||
+                          (!!branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt))
+                        }
                         onClick={() =>
                           onUpdateStatus({
                             businessId,
@@ -160,19 +184,24 @@ export const BranchList = ({
                           })
                         }
                         sx={{
-                          background: branch.deletedAt
-                            ? theme.palette.action.disabledBackground
-                            : theme.gradients.success,
+                          background:
+                            branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt)
+                              ? theme.palette.action.disabledBackground
+                              : theme.gradients.success,
                           color: "white",
                           "&:hover": {
-                            transform: branch.deletedAt
-                              ? "none"
-                              : "translateY(-2px)",
+                            transform:
+                              branch.deletedAt &&
+                              !isGracePeriodActive(branch.deletedAt)
+                                ? "none"
+                                : "translateY(-2px)",
                           },
                         }}
                         title={
-                          branch.deletedAt
-                            ? "Cannot approve deleted branch"
+                          branch.deletedAt &&
+                          !isGracePeriodActive(branch.deletedAt)
+                            ? "Cannot approve: Grace period expired"
                             : "Approve this branch"
                         }
                       >
@@ -182,7 +211,11 @@ export const BranchList = ({
                     {branch.status !== "Rejected" && (
                       <IconButton
                         size="small"
-                        disabled={isUpdatingStatus || !!branch.deletedAt}
+                        disabled={
+                          isUpdatingStatus ||
+                          (!!branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt))
+                        }
                         onClick={() =>
                           onUpdateStatus({
                             businessId,
@@ -193,51 +226,96 @@ export const BranchList = ({
                           })
                         }
                         sx={{
-                          background: branch.deletedAt
-                            ? theme.palette.action.disabledBackground
-                            : theme.gradients.error,
+                          background:
+                            branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt)
+                              ? theme.palette.action.disabledBackground
+                              : theme.gradients.error,
                           color: "white",
                           "&:hover": {
-                            transform: branch.deletedAt
-                              ? "none"
-                              : "translateY(-2px)",
+                            transform:
+                              branch.deletedAt &&
+                              !isGracePeriodActive(branch.deletedAt)
+                                ? "none"
+                                : "translateY(-2px)",
                           },
                         }}
                         title={
-                          branch.deletedAt
-                            ? "Cannot reject deleted branch"
+                          branch.deletedAt &&
+                          !isGracePeriodActive(branch.deletedAt)
+                            ? "Cannot reject: Grace period expired"
                             : "Reject this branch"
                         }
                       >
                         <RejectIcon fontSize="small" />
                       </IconButton>
                     )}
-                    <IconButton
-                      size="small"
-                      disabled={isDeletingBranch || !!branch.deletedAt}
-                      onClick={() => {
-                        if (confirm("Delete this branch permanently?")) {
-                          onDeleteBranch(branch.id);
+                    {branch.status !== "Pending" && (
+                      <IconButton
+                        size="small"
+                        disabled={
+                          isUpdatingStatus ||
+                          (!!branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt))
                         }
-                      }}
-                      sx={{
-                        "&:hover": {
-                          color: "error.main",
-                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                        },
-                      }}
-                      title={
-                        branch.deletedAt
-                          ? "Branch already deleted"
-                          : "Delete this branch"
-                      }
-                    >
-                      {isDeletingBranch ? (
-                        <CircularProgress size={16} />
-                      ) : (
-                        <DeleteIcon fontSize="small" />
-                      )}
-                    </IconButton>
+                        onClick={() =>
+                          onUpdateStatus({
+                            businessId,
+                            data: {
+                              status: "Pending",
+                              branchId: branch.id,
+                            },
+                          })
+                        }
+                        sx={{
+                          background:
+                            branch.deletedAt &&
+                            !isGracePeriodActive(branch.deletedAt)
+                              ? theme.palette.action.disabledBackground
+                              : theme.gradients.warning,
+                          color: "white",
+                          "&:hover": {
+                            transform:
+                              branch.deletedAt &&
+                              !isGracePeriodActive(branch.deletedAt)
+                                ? "none"
+                                : "translateY(-2px)",
+                          },
+                        }}
+                        title={
+                          branch.deletedAt &&
+                          !isGracePeriodActive(branch.deletedAt)
+                            ? "Cannot reset: Grace period expired"
+                            : "Mark as Pending"
+                        }
+                      >
+                        <PendingIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    {!branch.deletedAt && (
+                      <IconButton
+                        size="small"
+                        disabled={isDeletingBranch}
+                        onClick={() => {
+                          if (confirm("Delete this branch permanently?")) {
+                            onDeleteBranch(branch.id);
+                          }
+                        }}
+                        sx={{
+                          "&:hover": {
+                            color: "error.main",
+                            bgcolor: alpha(theme.palette.error.main, 0.1),
+                          },
+                        }}
+                        title="Delete this branch"
+                      >
+                        {isDeletingBranch ? (
+                          <CircularProgress size={16} />
+                        ) : (
+                          <DeleteIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    )}
                   </Stack>
                 </TableCell>
               </TableRow>

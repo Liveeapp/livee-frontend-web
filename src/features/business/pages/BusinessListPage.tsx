@@ -36,6 +36,7 @@ import {
   ScheduleRounded as PendingIcon,
   StorefrontRounded as StoreIcon,
   SearchRounded as SearchIcon,
+  WarningRounded as WarningIcon,
 } from "@mui/icons-material";
 import {
   useBusinesses,
@@ -43,13 +44,12 @@ import {
   useDeleteBusiness,
   useDeleteBranch,
 } from "../hooks";
-import type { BusinessModel } from "../types";
+import type { BusinessModel, BranchStatus } from "../types";
 import { getBusinessTypeLabel, getBranchStatusCounts } from "../utils";
 import { GradientBox, BranchList } from "../components";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const BusinessListPage = () => {
-  const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const theme = useTheme();
@@ -57,7 +57,12 @@ export const BusinessListPage = () => {
   const [selectedBusiness, setSelectedBusiness] =
     useState<BusinessModel | null>(null);
 
-  const { data, isLoading } = useBusinesses(page + 1);
+  const { data, isLoading } = useBusinesses(
+    statusFilter !== "all" && statusFilter !== "no_branches"
+      ? (statusFilter.charAt(0).toUpperCase() +
+          statusFilter.slice(1)) as BranchStatus
+      : undefined
+  );
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateBranchStatus();
   const { mutate: deleteBusiness, isPending: isDeletingBusiness } =
@@ -65,9 +70,9 @@ export const BusinessListPage = () => {
   const { mutate: deleteBranch, isPending: isDeletingBranch } =
     useDeleteBranch();
 
-  // Client-side filtering for search and status
+  // Client-side filtering for search
   const filteredRows = useMemo(() => {
-    let items = data?.data || [];
+    let items = data || [];
 
     // Search filter
     items = items.filter(
@@ -76,20 +81,13 @@ export const BusinessListPage = () => {
         item.user?.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Status filter
-    if (statusFilter !== "all") {
-      items = items.filter((item) => {
-        const counts = getBranchStatusCounts(item.branches);
-        if (statusFilter === "approved") return counts.Approved > 0;
-        if (statusFilter === "pending") return counts.Pending > 0;
-        if (statusFilter === "rejected") return counts.Rejected > 0;
-        if (statusFilter === "deleted") return counts.Deleted > 0;
-        return true;
-      });
+    // No Branches filter
+    if (statusFilter === "no_branches") {
+      items = items.filter((item) => item.branches.length === 0);
     }
 
     return items;
-  }, [data?.data, searchQuery, statusFilter]);
+  }, [data, searchQuery, statusFilter]);
 
   const columns: GridColDef[] = [
     {
@@ -201,56 +199,8 @@ export const BusinessListPage = () => {
                 borderColor: "divider",
               }}
             >
-              {counts.Approved > 0 && (
-                <Tooltip title="Verified Branches">
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      background: theme.gradients.success,
-                      px: 1,
-                      py: 0.25,
-                      borderRadius: 1.25,
-                      color: "white",
-                    }}
-                  >
-                    <ApproveIcon sx={{ fontSize: 14 }} />
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
-                    >
-                      {counts.Approved}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              )}
-              {counts.Pending > 0 && (
-                <Tooltip title="Pending Verification">
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      background: theme.gradients.warning,
-                      px: 1,
-                      py: 0.25,
-                      borderRadius: 1.25,
-                      color: "white",
-                    }}
-                  >
-                    <PendingIcon sx={{ fontSize: 14 }} />
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
-                    >
-                      {counts.Pending}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              )}
-              {counts.Rejected > 0 && (
-                <Tooltip title="Rejected Records">
+              {params.row.branches.length === 0 ? (
+                <Tooltip title="No Branches Registered">
                   <Box
                     sx={{
                       display: "flex",
@@ -261,66 +211,151 @@ export const BusinessListPage = () => {
                       py: 0.25,
                       borderRadius: 1.25,
                       color: "white",
+                      animation: "pulse 2s infinite ease-in-out",
+                      "@keyframes pulse": {
+                        "0%": { opacity: 1, transform: "scale(1)" },
+                        "50%": { opacity: 0.7, transform: "scale(0.95)" },
+                        "100%": { opacity: 1, transform: "scale(1)" },
+                      },
                     }}
                   >
-                    <RejectedIcon sx={{ fontSize: 14 }} />
+                    <WarningIcon sx={{ fontSize: 14 }} />
                     <Typography
                       variant="caption"
-                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                      sx={{ fontWeight: 900, fontSize: "0.7rem", letterSpacing: '0.05em' }}
                     >
-                      {counts.Rejected}
+                      NO ENTITIES
                     </Typography>
                   </Box>
                 </Tooltip>
-              )}
-              {counts.Deleted > 0 && (
-                <Tooltip title="Deleted Branches">
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      bgcolor: "text.tertiary",
-                      px: 1,
-                      py: 0.25,
-                      borderRadius: 1.25,
-                      color: "white",
-                    }}
-                  >
-                    <DeleteIcon sx={{ fontSize: 14 }} />
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 900, fontSize: "0.7rem" }}
-                    >
-                      {counts.Deleted}
-                    </Typography>
-                  </Box>
-                </Tooltip>
+              ) : (
+                <>
+                  {counts.Approved > 0 && (
+                    <Tooltip title="Verified Branches">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          background: theme.gradients.success,
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 1.25,
+                          color: "white",
+                        }}
+                      >
+                        <ApproveIcon sx={{ fontSize: 14 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                        >
+                          {counts.Approved}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  )}
+                  {counts.Pending > 0 && (
+                    <Tooltip title="Pending Verification">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          background: theme.gradients.warning,
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 1.25,
+                          color: "white",
+                        }}
+                      >
+                        <PendingIcon sx={{ fontSize: 14 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                        >
+                          {counts.Pending}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  )}
+                  {counts.Rejected > 0 && (
+                    <Tooltip title="Rejected Records">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          background: theme.gradients.error,
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 1.25,
+                          color: "white",
+                        }}
+                      >
+                        <RejectedIcon sx={{ fontSize: 14 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 900, fontSize: "0.7rem" }}
+                        >
+                          {counts.Rejected}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  )}
+                  {counts.Deleted > 0 && (
+                    <Tooltip title={`${counts.Deleted} Branches in Deletion Grace Period`}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          bgcolor: alpha(theme.palette.text.tertiary, 0.1),
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 1.25,
+                          color: "text.tertiary",
+                          border: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      >
+                        <DeleteIcon sx={{ fontSize: 14, opacity: 0.7 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 900, fontSize: "0.6rem", letterSpacing: '0.05em' }}
+                        >
+                          GRACEFUL: {counts.Deleted}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  )}
+                </>
               )}
             </Stack>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() => setSelectedBusiness(params.row)}
-              sx={{
-                py: 0.75,
-                px: 2.5,
-                borderRadius: 2,
-                fontSize: "0.75rem",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                boxShadow: theme.customShadows.md,
-                background: theme.gradients.primary,
-                color: "white",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  filter: "brightness(1.1)",
-                },
-              }}
-            >
-              Manage
-            </Button>
+            {params.row.branches.length > 0 && (
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() => setSelectedBusiness(params.row)}
+                sx={{
+                  py: 0.75,
+                  px: 2.5,
+                  borderRadius: 2,
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  boxShadow: theme.customShadows.md,
+                  background: theme.gradients.primary,
+                  color: "white",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    filter: "brightness(1.1)",
+                  },
+                }}
+              >
+                Manage
+              </Button>
+            )}
           </Box>
         );
       },
@@ -331,38 +366,41 @@ export const BusinessListPage = () => {
       width: 100,
       sortable: false,
       align: "right",
-      renderCell: (params: GridRenderCellParams<BusinessModel>) => (
-        <Box sx={{ pr: 2 }}>
-          <IconButton
-            color="error"
-            size="medium"
-            disabled={isDeletingBusiness}
-            onClick={() => {
-              if (
-                confirm(
-                  "Delete this business and all associated data permanently?"
+      renderCell: (params: GridRenderCellParams<BusinessModel>) => {
+        if (statusFilter === "deleted") return null;
+        return (
+          <Box sx={{ pr: 2 }}>
+            <IconButton
+              color="error"
+              size="medium"
+              disabled={isDeletingBusiness}
+              onClick={() => {
+                if (
+                  confirm(
+                    "Delete this business and all associated data permanently?"
+                  )
                 )
-              )
-                deleteBusiness(params.row.id);
-            }}
-            sx={{
-              opacity: 0.6,
-              transition: "all 0.2s",
-              "&:hover": {
-                opacity: 1,
-                bgcolor: alpha(theme.palette.error.main, 0.12),
-                transform: "scale(1.1)",
-              },
-            }}
-          >
-            {isDeletingBusiness ? (
-              <CircularProgress size={20} color="error" />
-            ) : (
-              <DeleteIcon />
-            )}
-          </IconButton>
-        </Box>
-      ),
+                  deleteBusiness(params.row.id);
+              }}
+              sx={{
+                opacity: 0.6,
+                transition: "all 0.2s",
+                "&:hover": {
+                  opacity: 1,
+                  bgcolor: alpha(theme.palette.error.main, 0.12),
+                  transform: "scale(1.1)",
+                },
+              }}
+            >
+              {isDeletingBusiness ? (
+                <CircularProgress size={20} color="error" />
+              ) : (
+                <DeleteIcon />
+              )}
+            </IconButton>
+          </Box>
+        );
+      },
     },
   ];
 
@@ -469,6 +507,7 @@ export const BusinessListPage = () => {
               <MenuItem value="pending">⏳ Pending Only</MenuItem>
               <MenuItem value="rejected">✗ Rejected Only</MenuItem>
               <MenuItem value="deleted">🗑 Deleted Only</MenuItem>
+              <MenuItem value="no_branches">⚠️ No Branches</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -496,10 +535,13 @@ export const BusinessListPage = () => {
             columns={columns}
             loading={isLoading}
             autoHeight
-            paginationMode="server"
-            rowCount={data?.pagination.totalItems || 0}
-            paginationModel={{ page, pageSize: 20 }}
-            onPaginationModelChange={(model) => setPage(model.page)}
+            pagination
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 20 },
+              },
+            }}
+            pageSizeOptions={[10, 20, 50]}
             getRowId={(row) => row.id}
             disableRowSelectionOnClick
             rowHeight={92}

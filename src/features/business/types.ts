@@ -23,6 +23,7 @@ export interface BranchModel {
   branchName: string;
   status: BranchStatus;
   isNewBranch: boolean;
+  createdAt: string;
   location: BusinessLocation | null;
   businessHours: BusinessHours[];
   deletedAt?: string | null;

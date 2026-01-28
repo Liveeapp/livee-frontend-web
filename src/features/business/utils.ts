@@ -107,12 +107,9 @@ export const getBranchStatusCounts = (
     return { Approved: 0, Pending: 0, Rejected: 0, Deleted: 0 };
   }
   return {
-    Approved: branches.filter((b) => !b.deletedAt && b.status === "Approved")
-      .length,
-    Pending: branches.filter((b) => !b.deletedAt && b.status === "Pending")
-      .length,
-    Rejected: branches.filter((b) => !b.deletedAt && b.status === "Rejected")
-      .length,
+    Approved: branches.filter((b) => b.status === "Approved").length,
+    Pending: branches.filter((b) => b.status === "Pending").length,
+    Rejected: branches.filter((b) => b.status === "Rejected").length,
     Deleted: branches.filter((b) => !!b.deletedAt).length,
   };
 };
@@ -130,4 +127,28 @@ export const getBranchStatusSummary = (
   if (counts.Rejected > 0) parts.push(`${counts.Rejected} Rejected`);
 
   return parts.length > 0 ? parts.join(", ") : "No branches";
+};
+
+/**
+ * Calculate remaining days in the 30-day grace period for deleted items
+ */
+export const getRemainingGraceDays = (deletedAt: string | null): number => {
+  if (!deletedAt) return 0;
+  const deletionDate = new Date(deletedAt);
+  const expiryDate = new Date(deletionDate);
+  expiryDate.setDate(deletionDate.getDate() + 30);
+
+  const now = new Date();
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return Math.max(0, diffDays);
+};
+
+/**
+ * Check if the 30-day grace period is still active
+ */
+export const isGracePeriodActive = (deletedAt: string | null): boolean => {
+  if (!deletedAt) return false;
+  return getRemainingGraceDays(deletedAt) > 0;
 };

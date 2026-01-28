@@ -1,20 +1,16 @@
 import { adminApi } from "@/api/client";
 import type {
-  PaginatedResponse,
   BusinessModel,
   UpdateBranchStatusDto,
+  BranchStatus,
 } from "./types";
 
 export const getBusinesses = async (
-  page = 1,
-  limit = 20
-): Promise<PaginatedResponse<BusinessModel>> => {
-  const response = await adminApi.get<PaginatedResponse<BusinessModel>>(
-    "/admin/businesses",
-    {
-      params: { page, limit },
-    }
-  );
+  branchStatus?: BranchStatus
+): Promise<BusinessModel[]> => {
+  const response = await adminApi.get<BusinessModel[]>("/admin/businesses", {
+    params: { branchStatus },
+  });
   return response.data;
 };
 
